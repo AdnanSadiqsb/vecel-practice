@@ -11,7 +11,7 @@ def index(request):
     <html>
         <body>
             <h1>Hello from Vercel!</h1>
-            <p>The current time is { now }.</p>
+            <p>The current time is { now }. updated by ad</p>
         </body>
     </html>
     '''
