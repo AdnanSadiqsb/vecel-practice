@@ -77,17 +77,17 @@ WSGI_APPLICATION = 'versel_deploymet.wsgi.app'
 # environments like Vercel. You can use a database over HTTP, hosted elsewhere.
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DATABASE'),
-        'USER': os.getenv('POSTGRES_USER'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
-        'HOST': os.getenv('POSTGRES_HOST'),
-        'PORT': '5432',  # Assuming default PostgreSQL port
-        'OPTIONS': {
-            'sslmode': 'require',  # Ensures that SSL is used
-        },
-    }
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': os.getenv('POSTGRES_DATABASE'),
+    #     'USER': os.getenv('POSTGRES_USER'),
+    #     'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+    #     'HOST': os.getenv('POSTGRES_HOST'),
+    #     'PORT': '5432',  # Assuming default PostgreSQL port
+    #     'OPTIONS': {
+    #         'sslmode': 'require',  # Ensures that SSL is used
+    #     },
+    # }
 }
 
 
@@ -135,3 +135,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static')
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = "example.User"  # updated
+AUTHENTICATION_BACKENDS = ["example.backends.EmailBackend"]  # updated

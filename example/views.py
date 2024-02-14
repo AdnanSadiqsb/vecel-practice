@@ -1,21 +1,12 @@
-# example/views.py
-from datetime import datetime
+# Create your views here.
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 
-from django.http import HttpResponse
-from django.shortcuts import render
+from .models import User
+from .serializer import UserSerializer
 
 
-def index(request):
-    now = datetime.now()
-    html = f'''
-    <html>
-        <body>
-            <h1>Hello from Vercel!</h1>
-            <p>The current time is { now }. updated by ad</p>
-        </body>
-    </html>
-    '''
-    return HttpResponse(html)
-
-def home(request):
-    return render(request, 'index.html')
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
