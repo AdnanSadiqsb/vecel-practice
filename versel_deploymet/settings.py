@@ -77,17 +77,21 @@ WSGI_APPLICATION = 'versel_deploymet.wsgi.app'
 # environments like Vercel. You can use a database over HTTP, hosted elsewhere.
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': os.getenv('POSTGRES_DATABASE'),
-    #     'USER': os.getenv('POSTGRES_USER'),
-    #     'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
-    #     'HOST': os.getenv('POSTGRES_HOST'),
-    #     'PORT': '5432',  # Assuming default PostgreSQL port
-    #     'OPTIONS': {
-    #         'sslmode': 'require',  # Ensures that SSL is used
-    #     },
+    # "default": {
+    #     "ENGINE": "django.db.backends.sqlite3",
+    #     "NAME": BASE_DIR / "db.sqlite3",
     # }
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'verceldb',
+        'USER': 'default',
+        'PASSWORD': 'Dl6Be9gnGQTs',
+        'HOST': 'ep-patient-moon-a4n5oni2-pooler.us-east-1.aws.neon.tech',
+        'PORT': '5432',  # Assuming default PostgreSQL port
+        'OPTIONS': {
+            'sslmode': 'require',  # Ensures that SSL is used
+        },
+    }
 }
 
 
