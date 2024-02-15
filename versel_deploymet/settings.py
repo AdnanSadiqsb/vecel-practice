@@ -90,6 +90,7 @@ DATABASES = {
         'PORT': '5432',  # Assuming default PostgreSQL port
         'OPTIONS': {
             'sslmode': 'require',  # Ensures that SSL is used
+            'options': 'endpoint=ep-patient-moon-a4n5oni2-pooler'
         },
     }
 }
