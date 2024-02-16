@@ -2,8 +2,7 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
-from .models import User
-from .serializer import UserSerializer
+from .models import User, Project, Tasks
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from rest_framework import viewsets, status
@@ -11,16 +10,16 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
-from rest_framework import serializers
+from rest_framework import serializers, mixins
 from rest_framework.authtoken.models import Token
+
 from . import serializer
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = serializer.UserSerializer
     permission_classes = [IsAuthenticated]
 
 def get_and_authenticate_user(email, password):
-    print(email, password)
     user = authenticate(username=email, password=password)
     if user is None:
         raise serializers.ValidationError("Invalid username/password. Please try again!")
@@ -28,15 +27,33 @@ def get_and_authenticate_user(email, password):
 
 class AuthViewSet(viewsets.GenericViewSet):
     queryset = User.objects.all()
-    permission_classes = [AllowAny, ]
+    permission_classes = [AllowAny]
     serializer_class = serializer.EmptySerializer
 
     @action(detail=False, methods=['POST', ],url_path='login',  serializer_class=serializer.LoginSerializer)
     def login(self, request):
         user = get_and_authenticate_user(email=request.data['email'], password=request.data['password'])
-        print(user)
-        data = UserSerializer(user).data  
+        data = serializer.UserSerializer(user).data  
         token, created = Token.objects.get_or_create(user=user)
-        print(token)
         return Response(data={'user': data, 'token': token.key}, status=status.HTTP_200_OK)
+    
+
+class ProjectViewSet(viewsets.ModelViewSet):
+    queryset = Project.objects.all()
+    serializer_class = serializer.ProjectSerializer
+    permission_classes = [IsAuthenticated]
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializer.GetProjectSerializer
+        return self.serializer_class
+
+class TaskViewSet(viewsets.ModelViewSet):
+    queryset = Tasks.objects.all()
+    serializer_class = serializer.TasksSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializer.GetTasksSerializer
+        return self.serializer_class
 

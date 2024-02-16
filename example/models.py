@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
-from .choices import UserRole
+import datetime
+from .choices import UserRole, ProjectStatus
 from django.dispatch import receiver
 
 
@@ -21,3 +21,43 @@ def auto_delete_avatar(sender, instance, **kwargs):
     if instance.avatar:
         if instance.avatar.storage.exists(instance.avatar.name):
             instance.avatar.storage.delete(instance.avatar.name)
+
+
+class Project(models.Model):
+    title = models.CharField(max_length=100)
+    description = models.TextField(null=True, blank=True)
+    image = models.FileField(upload_to="static/projects_images", blank=True, null=True)
+    
+    startDate = models.DateField(null=True, blank=True)
+    endDate = models.DateField(null=True, blank=True)
+    managers = models.ManyToManyField(User, related_name='managers')
+    status = models.CharField(max_length=20, choices=ProjectStatus.choices, default=ProjectStatus.PENDING)
+    is_active = models.BooleanField(default=True)
+
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+    
+    class Meta:
+        verbose_name = 'Project'
+        verbose_name_plural = 'Projects'
+        
+
+class Tasks(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    title = models.CharField(max_length=100)
+    description = models.TextField(null=True, blank=True)
+    workers = models.ManyToManyField(User, related_name='workers')
+    startDate = models.DateField(null=True, blank=True)
+    endDate = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=ProjectStatus.choices, default=ProjectStatus.PENDING)
+    is_active = models.BooleanField(default=True)
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return self.text
+    
+    class Meta:
+        verbose_name = 'Task'
+        verbose_name_plural ='Tasks'
