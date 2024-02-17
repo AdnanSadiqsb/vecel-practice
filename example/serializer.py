@@ -8,7 +8,17 @@ from .models import User, Project, Tasks
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        exclude = ["groups", "user_permissions"]
+        exclude = ["groups", "user_permissions", "is_superuser", "is_staff"]
+    
+    def create(self, validated_data):
+        # Check if role is 'admin', if yes, set is_superuser to True, otherwise False
+        role = validated_data.get('role', None)
+        if role == 'admin':
+            validated_data['is_superuser'] = True
+        else:
+            validated_data['is_superuser'] = False
+        
+        return super().create(validated_data)
 
 class UserShortInfoSerializer(serializers.ModelSerializer):
     class Meta:

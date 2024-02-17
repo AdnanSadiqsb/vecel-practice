@@ -11,6 +11,9 @@ class User(AbstractUser):
         max_length=20, choices=UserRole.choices, default=UserRole.ADMIN
     )
     avatar = models.FileField(upload_to="static/users_avatars", blank=True)
+    first_name = None
+    last_name = None
+    username = models.CharField(max_length=100)
 
 # Signal to delete avatar file when a User instance is deleted
 @receiver(models.signals.post_delete, sender=User)
