@@ -40,6 +40,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_yasg',
     'rest_framework.authtoken',
+
+    'cloudinary_storage',
+    'cloudinary',
     'example'
 ]
 
@@ -157,3 +160,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = "example.User"  # updated
 AUTHENTICATION_BACKENDS = ["example.backends.EmailBackend"]  # updated
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dcqeugna3',
+    'API_KEY': '424258596713575',
+    'API_SECRET': 'podU121kbELuOEEDob9w3rLQg0w'
+}
+MEDIA_URL = '/media/'  # or any prefix you choose
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'

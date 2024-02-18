@@ -11,6 +11,7 @@ class User(AbstractUser):
         max_length=20, choices=UserRole.choices, default=UserRole.ADMIN
     )
     avatar = models.FileField(upload_to="static/users_avatars", blank=True)
+    phoneNumber = models.CharField(max_length=20, null=True, blank=True)
     first_name = None
     last_name = None
     username = models.CharField(max_length=100)
