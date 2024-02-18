@@ -10,8 +10,8 @@ drf-yasg==1.21.7
 idna==3.6
 inflection==0.5.1
 packaging==23.2
-
-
+psycopg2==2.9.1
+psycopg2-binary==2.9.1
 pytz==2024.1
 PyYAML==6.0.1
 requests==2.31.0
@@ -20,4 +20,3 @@ sqlparse==0.4.1
 typing_extensions==4.9.0
 uritemplate==4.1.1
 urllib3==1.26.7
-
