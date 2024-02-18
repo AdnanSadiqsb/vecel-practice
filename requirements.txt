@@ -10,7 +10,7 @@ drf-yasg==1.21.7
 idna==3.6
 inflection==0.5.1
 packaging==23.2
-psycopg2==2.9.1
+
 
 pytz==2024.1
 PyYAML==6.0.1
