@@ -12,9 +12,12 @@ from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework import serializers, mixins
 from rest_framework.authtoken.models import Token
+from rest_framework.parsers import FormParser, MultiPartParser, FileUploadParser
 
 from . import serializer
 class UserViewSet(viewsets.ModelViewSet):
+    
+    parser_classes = (FormParser, MultiPartParser)
     queryset = User.objects.all()
     serializer_class = serializer.UserSerializer
     permission_classes = [IsAuthenticated]
@@ -45,6 +48,7 @@ class AuthViewSet(viewsets.GenericViewSet):
     
 
 class ProjectViewSet(viewsets.ModelViewSet):
+    parser_classes = (FormParser, MultiPartParser)
     queryset = Project.objects.all()
     serializer_class = serializer.ProjectSerializer
     permission_classes = [IsAuthenticated]
@@ -54,6 +58,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return self.serializer_class
 
 class TaskViewSet(viewsets.ModelViewSet):
+    parser_classes = (FormParser, MultiPartParser)
     queryset = Tasks.objects.all()
     serializer_class = serializer.TasksSerializer
     permission_classes = [IsAuthenticated]
