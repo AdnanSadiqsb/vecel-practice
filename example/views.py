@@ -19,7 +19,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = serializer.UserSerializer
     permission_classes = [IsAuthenticated]
     
-    @action(detail=False, methods=['GET'], url_path='by-role/(?P<role>[^/]+)/', serializer_class=serializer.UserSerializer)
+    @action(detail=False, methods=['GET'], url_path='by-role/(?P<role>[^/]+)', serializer_class=serializer.UserSerializer)
     def get_users_by_role(self, request, role =None):
         users = User.objects.filter(role=role)
         data = self.get_serializer(users, many=True).data  
