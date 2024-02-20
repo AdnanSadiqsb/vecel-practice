@@ -40,9 +40,12 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 class GetProjectSerializer(serializers.ModelSerializer):
     managers = UserShortInfoSerializer(many=True, read_only=True)
+    total_tasks = serializers.SerializerMethodField()
     class Meta:
         model = Project
         fields = '__all__'
+
+    get_total_tasks = lambda self, obj: obj.project_tasks.count()
 
 class TasksSerializer(serializers.ModelSerializer):
     class Meta:

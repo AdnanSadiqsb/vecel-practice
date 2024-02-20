@@ -49,10 +49,10 @@ class Project(models.Model):
         
 
 class Tasks(models.Model):
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='project_tasks')
     title = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
-    workers = models.ManyToManyField(User, related_name='workers')
+    workers = models.ManyToManyField(User, related_name='task_workers')
     startDate = models.DateField(null=True, blank=True)
     endDate = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=ProjectStatus.choices, default=ProjectStatus.PENDING)
