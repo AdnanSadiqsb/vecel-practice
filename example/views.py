@@ -54,6 +54,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if self.request.method == 'GET':
             return serializer.GetProjectSerializer
         return self.serializer_class
+    
+    
+    @action(detail=False, methods=['GET'], url_path='projects', serializer_class=serializer.ProjectSerializer)
+    def get_all_projects(self, request, pk =None):
+        projects = Project.objects.all()
+        data = serializer.ProjectSerializer(projects, many=True).data  
+        return Response(data=data, status=status.HTTP_200_OK)
 
 class TaskViewSet(viewsets.ModelViewSet):
     parser_classes = (FormParser, MultiPartParser)

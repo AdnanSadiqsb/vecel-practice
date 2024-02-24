@@ -37,7 +37,7 @@ class Project(models.Model):
     managers = models.ManyToManyField(User, related_name='managers')
     status = models.CharField(max_length=20, choices=ProjectStatus.choices, default=ProjectStatus.PENDING)
     is_active = models.BooleanField(default=True)
-
+    address = models.CharField(max_length=100, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -59,6 +59,7 @@ class Tasks(models.Model):
     is_active = models.BooleanField(default=True)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
+    color = models.CharField(max_length=20, default='#3788D8')
     def __str__(self):
         return self.text
     
