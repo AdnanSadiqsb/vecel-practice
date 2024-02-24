@@ -6,7 +6,7 @@ from .models import User, Project, Tasks
 
 # Serializers define the API representation.
 class UserSerializer(serializers.ModelSerializer):
-    avatar = serializers.FileField(max_length=None, allow_empty_file=True, use_url=True)
+
     class Meta:
         model = User
         exclude = ["groups", "user_permissions", "is_superuser", "is_staff"]

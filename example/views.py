@@ -3,8 +3,6 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from .models import User, Project, Tasks
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ImproperlyConfigured
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -12,7 +10,7 @@ from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework import serializers, mixins
 from rest_framework.authtoken.models import Token
-from rest_framework.parsers import FormParser, MultiPartParser, FileUploadParser
+from rest_framework.parsers import FormParser, MultiPartParser
 
 from . import serializer
 class UserViewSet(viewsets.ModelViewSet):
@@ -67,4 +65,10 @@ class TaskViewSet(viewsets.ModelViewSet):
         if self.request.method == 'GET':
             return serializer.GetTasksSerializer
         return self.serializer_class
+    
+    @action(detail=True, methods=['GET'], url_path='project', serializer_class=serializer.GetTasksSerializer)
+    def get_users_by_role(self, request, pk =None):
+        users = Tasks.objects.filter(project=pk)
+        data = serializer.GetTasksSerializer(users, many=True).data  
+        return Response(data=data, status=status.HTTP_200_OK)
 
