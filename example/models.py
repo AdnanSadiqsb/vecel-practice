@@ -61,7 +61,7 @@ class Tasks(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     color = models.CharField(max_length=20, default='#3788D8')
     def __str__(self):
-        return self.text
+        return self.title
     
     class Meta:
         verbose_name = 'Task'

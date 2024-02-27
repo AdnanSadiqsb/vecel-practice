@@ -1,6 +1,9 @@
 from rest_framework import serializers
 
 from .models import User, Project, Tasks
+from datetime import date
+from .choices import ProjectStatus
+
 
 
 
@@ -33,11 +36,14 @@ class LoginSerializer(serializers.Serializer):
 class EmptySerializer(serializers.Serializer):
     pass
 
+
+
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = '__all__'
 
+   
 class GetProjectSerializer(serializers.ModelSerializer):
     managers = UserShortInfoSerializer(many=True, read_only=True)
     total_tasks = serializers.SerializerMethodField()
@@ -52,6 +58,8 @@ class TasksSerializer(serializers.ModelSerializer):
         model = Tasks
         fields = '__all__'
 
+
+    
 class GetTasksSerializer(serializers.ModelSerializer):
     workers = UserShortInfoSerializer(many=True, read_only=True)
     class Meta:
