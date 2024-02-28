@@ -112,8 +112,14 @@ class TaskViewSet(viewsets.ModelViewSet):
         serializ.save()
         return Response(serializ.data, status=status.HTTP_201_CREATED)
     @action(detail=True, methods=['GET'], url_path='project', serializer_class=serializer.GetTasksSerializer)
-    def get_users_by_role(self, request, pk =None):
+    def get_projects(self, request, pk =None):
         users = Tasks.objects.filter(project=pk)
         data = serializer.GetTasksSerializer(users, many=True).data  
+        return Response(data=data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['GET'], url_path='worker-tasks', serializer_class=serializer.GetTasksSerializer)
+    def get_all_worker_tasks(self, request, pk =None):
+        tasks = Tasks.objects.filter(workers = pk)
+        data = serializer.GetTasksSerializer(tasks, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
 
