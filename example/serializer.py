@@ -43,7 +43,11 @@ class ProjectSerializer(serializers.ModelSerializer):
         model = Project
         fields = '__all__'
 
-   
+class ProjectShortInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = ['id', 'title', 'startDate', 'endDate', 'status', 'address']
+
 class GetProjectSerializer(serializers.ModelSerializer):
     managers = UserShortInfoSerializer(many=True, read_only=True)
     total_tasks = serializers.SerializerMethodField()
@@ -62,6 +66,14 @@ class TasksSerializer(serializers.ModelSerializer):
     
 class GetTasksSerializer(serializers.ModelSerializer):
     workers = UserShortInfoSerializer(many=True, read_only=True)
+    class Meta:
+        model = Tasks
+        fields = '__all__'
+
+
+class GetWorkerTasksSerializer(serializers.ModelSerializer):
+    workers = UserShortInfoSerializer(many=True, read_only=True)
+    project  = ProjectShortInfoSerializer(read_only=True)
     class Meta:
         model = Tasks
         fields = '__all__'

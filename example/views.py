@@ -117,9 +117,9 @@ class TaskViewSet(viewsets.ModelViewSet):
         data = serializer.GetTasksSerializer(users, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
     
-    @action(detail=True, methods=['GET'], url_path='worker-tasks', serializer_class=serializer.GetTasksSerializer)
+    @action(detail=True, methods=['GET'], url_path='worker-tasks', serializer_class=serializer.GetWorkerTasksSerializer)
     def get_all_worker_tasks(self, request, pk =None):
         tasks = Tasks.objects.filter(workers = pk)
-        data = serializer.GetTasksSerializer(tasks, many=True).data
+        data = serializer.GetWorkerTasksSerializer(tasks, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
 
