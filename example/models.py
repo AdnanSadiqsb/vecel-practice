@@ -17,6 +17,8 @@ class User(AbstractUser):
     last_name = None
     username = models.CharField(max_length=100)
 
+    class Meta:
+        ordering = ['-date_joined']
 # Signal to delete avatar file when a User instance is deleted
 @receiver(models.signals.post_delete, sender=User)
 def auto_delete_avatar(sender, instance, **kwargs):
@@ -47,6 +49,8 @@ class Project(models.Model):
     class Meta:
         verbose_name = 'Project'
         verbose_name_plural = 'Projects'
+        ordering = ['-created']
+        
         
 
 class Tasks(models.Model):
@@ -67,3 +71,4 @@ class Tasks(models.Model):
     class Meta:
         verbose_name = 'Task'
         verbose_name_plural ='Tasks'
+        ordering = ['-created']
