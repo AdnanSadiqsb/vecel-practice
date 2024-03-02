@@ -51,11 +51,18 @@ class ProjectShortInfoSerializer(serializers.ModelSerializer):
 class GetProjectSerializer(serializers.ModelSerializer):
     managers = UserShortInfoSerializer(many=True, read_only=True)
     total_tasks = serializers.SerializerMethodField()
+    percentage  = serializers.SerializerMethodField()
     class Meta:
         model = Project
         fields = '__all__'
 
     get_total_tasks = lambda self, obj: obj.project_tasks.count()
+    def get_percentage(self, obj):
+        total_tasks = obj.project_tasks.count()
+        if total_tasks == 0:
+            return 0
+        completed_tasks = obj.project_tasks.filter(status=ProjectStatus.COMPLETED).count()
+        return (completed_tasks / total_tasks) * 100
 
 class TasksSerializer(serializers.ModelSerializer):
     class Meta:

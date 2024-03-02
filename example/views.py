@@ -15,7 +15,6 @@ from rest_framework.parsers import FormParser, MultiPartParser
 
 from . import serializer
 class UserViewSet(viewsets.ModelViewSet):
-    
     parser_classes = (FormParser, MultiPartParser)
     queryset = User.objects.all()
     serializer_class = serializer.UserSerializer
@@ -89,6 +88,25 @@ class ProjectViewSet(viewsets.ModelViewSet):
         projects = Project.objects.all()
         data = serializer.ProjectSerializer(projects, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['GET'], url_path='dashboard', serializer_class=serializer.ProjectSerializer)
+    def get_project_stats(self, request, pk =None):
+        all_projects = Project.objects.all().count()
+        active_projects = Project.objects.filter(status=ProjectStatus.ACTIVE).count()
+        workers = User.objects.filter(role='worker').count()
+        managers = User.objects.filter(role='manager').count()
+
+        return Response(data={'all_project':all_projects, 'active_projects':active_projects,'workers':workers, 'managers':managers}, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['GET'], url_path='my-projects-or-admin', serializer_class=serializer.GetProjectSerializer)
+    def get_my_projects_or_admin(self, request, pk =None):
+        print(request.user.role)
+        projects = Project.objects.all()
+        if request.user.role == 'manager':
+            projects = Project.objects.filter(managers=request.user)
+        data = serializer.GetProjectSerializer(projects, many=True).data  
+        return Response(data=data, status=status.HTTP_200_OK)
+    
 
 class TaskViewSet(viewsets.ModelViewSet):
     parser_classes = (FormParser, MultiPartParser)
