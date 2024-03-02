@@ -18,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Encrypt the password before saving
         validated_data['password'] = make_password(validated_data.get('password'))
-        
+        validated_data['is_active'] = True
         # Check if role is 'admin', if yes, set is_superuser to True, otherwise False
         role = validated_data.get('role', None)
         if role == 'admin':
