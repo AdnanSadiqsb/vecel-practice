@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import User, Project, Tasks
 from datetime import date
 from .choices import ProjectStatus
+from django.contrib.auth.hashers import make_password
 
 
 
@@ -15,6 +16,9 @@ class UserSerializer(serializers.ModelSerializer):
         exclude = ["groups", "user_permissions", "is_superuser", "is_staff"]
     
     def create(self, validated_data):
+        # Encrypt the password before saving
+        validated_data['password'] = make_password(validated_data.get('password'))
+        
         # Check if role is 'admin', if yes, set is_superuser to True, otherwise False
         role = validated_data.get('role', None)
         if role == 'admin':
@@ -23,6 +27,14 @@ class UserSerializer(serializers.ModelSerializer):
             validated_data['is_superuser'] = False
         
         return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # Encrypt the password if it's present in validated_data
+        password = validated_data.pop('password', None)
+        if password:
+            validated_data['password'] = make_password(password)
+
+        return super().update(instance, validated_data)
 
 class UserShortInfoSerializer(serializers.ModelSerializer):
     class Meta:
