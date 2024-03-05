@@ -10,7 +10,7 @@ from django.contrib.auth.hashers import make_password
 
 # Serializers define the API representation.
 class UserSerializer(serializers.ModelSerializer):
-
+    password = serializers.CharField(read_only=True)
     class Meta:
         model = User
         exclude = ["groups", "user_permissions", "is_superuser", "is_staff"]
@@ -31,7 +31,8 @@ class UserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         # Encrypt the password if it's present in validated_data
         password = validated_data.pop('password', None)
-        if password:
+
+        if len(password)<12:
             validated_data['password'] = make_password(password)
 
         return super().update(instance, validated_data)
