@@ -30,9 +30,10 @@ class UserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         # Encrypt the password if it's present in validated_data
         password = validated_data.pop('password', None)
-
-        if password and len(password)>=12:
+        print("password", password)
+        if password and len(password)<=12:
             validated_data['password'] = make_password(password)
+            print("inside up")
 
         return super().update(instance, validated_data)
 
