@@ -91,12 +91,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['GET'], url_path='dashboard', serializer_class=serializer.ProjectSerializer)
     def get_project_stats(self, request, pk =None):
-        all_projects = Project.objects.all().count()
-        active_projects = Project.objects.filter(status=ProjectStatus.ACTIVE).count()
+        projects = Project.objects.all()
+        all_projects = projects.count()
+        active_projects = projects.filter(status=ProjectStatus.ACTIVE).count()
+        completed_projects = projects.filter(status=ProjectStatus.COMPLETED).count()
+        pending_projects = projects.filter(status=ProjectStatus.PENDING).count()
         workers = User.objects.filter(role='worker').count()
         managers = User.objects.filter(role='manager').count()
 
-        return Response(data={'all_project':all_projects, 'active_projects':active_projects,'workers':workers, 'managers':managers}, status=status.HTTP_200_OK)
+        return Response(data={'all_project':all_projects, 'active_projects':active_projects, 'completed_projects': completed_projects, 'pending_projects':pending_projects, 'workers':workers, 'managers':managers}, status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['GET'], url_path='my-projects-or-admin', serializer_class=serializer.GetProjectSerializer)
     def get_my_projects_or_admin(self, request, pk =None):
