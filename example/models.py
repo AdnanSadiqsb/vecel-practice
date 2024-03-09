@@ -16,6 +16,7 @@ class User(AbstractUser):
     first_name = None
     last_name = None
     username = models.CharField(max_length=100)
+    is_sentMail = models.CharField(max_length=10, default=False)
 
     class Meta:
         ordering = ['-date_joined']
