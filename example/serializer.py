@@ -85,14 +85,13 @@ def sendMailOnTaskHandler(task=0, action='create' ):
         worker_ids = [worker.id for worker in workers] 
         users = User.objects.filter(id__in=worker_ids)
         emails = [user.email for user in users]
-        message='New task assigned to you please check'
+        message='You have been assigned a new task. Please review the details below:'
         subject = "new task"
         if(action=='update'):
-            message='The task is updated that is assigned to you please check'
+            message='The task assigned to you has been updated. Please review the changes below:'
             subject = "task updated"
 
         template_data={
-    
         'task': GetTasksFormEmailOnCUSerializer(taskObj).data,
         'message':message
         }

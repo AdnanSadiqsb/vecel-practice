@@ -203,11 +203,11 @@ class TaskViewSet(viewsets.ModelViewSet):
         data = serializer.GetWorkerTasksSerializer(tasks, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
     
-    @action(detail=False, methods=['GET'], url_path='mail', serializer_class=serializer.GetWorkerTasksSerializer, permission_classes = [AllowAny])
+    @action(detail=True, methods=['GET'], url_path='worker-mail', permission_classes = [IsAuthenticated])
     def send_email_to_workers(self, request, pk =None):
         print("before")
         # SMTPMailService.send_mail_service(subject="test mail", message = "simple message", recipient_list = ['adnansadiqxyz@gmail.com'])
-        worker  = User.objects.get(id=76)
+        worker  = User.objects.get(id=pk)
         projects = Project.objects.filter(project_tasks__workers=worker).distinct()
         serialize = serializer.GetWorkerProjectForMailSerializer(projects, many=True, context={'worker':worker})
         print(projects)
@@ -217,7 +217,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         'projects': serialize.data,
         }
 
-        SMTPMailService.send_html_mail_service(subject="Your Assigned Tasks", template='tasks.html', template_data=template_data, recipient_list = ['raoarslan263@gmail.com'])
+        SMTPMailService.send_html_mail_service(subject="Your Assigned Tasks", template='tasks.html', template_data=template_data, recipient_list = [worker.email])
         print("after")
         
         return Response(data='mail sent', status=status.HTTP_200_OK)
