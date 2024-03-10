@@ -168,3 +168,21 @@ CLOUDINARY_STORAGE = {
 }
 MEDIA_URL = '/media/'  # or any prefix you choose
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+
+# SMTP email sender settings
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587  # Use 587 for TLS or 465 for SSL
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'info@earnflex.com'
+# EMAIL_HOST_PASSWORD = 'Chef12345$'
+
+
+
+ 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'adnansadiq230eb@gmail.com'
+EMAIL_HOST_PASSWORD = 'xzkq hfld cwjt bnuw'

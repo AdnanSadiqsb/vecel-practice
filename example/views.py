@@ -12,7 +12,7 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers, mixins
 from rest_framework.authtoken.models import Token
 from rest_framework.parsers import FormParser, MultiPartParser
-
+from .services.mail_serive import SMTPMailService
 from . import serializer
 class UserViewSet(viewsets.ModelViewSet):
     parser_classes = (FormParser, MultiPartParser)
@@ -111,7 +111,64 @@ class ProjectViewSet(viewsets.ModelViewSet):
         data = serializer.GetProjectSerializer(projects, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
     
+tasks_list = [
+  
 
+  {
+    "id": 57,
+
+    "title": "Masonry",
+    "description": "Start Stone Installation",
+    "startDate": "2024-04-08",
+    "endDate": "2024-05-04",
+    "status": "pending",
+
+    "updated": "2024-03-05T18:57:44.244501Z",
+    "created": "2024-03-02T13:11:04.216375Z",
+    "color": "#7a4a00",
+    "project": 39
+  },
+  {
+    "id": 56,
+
+    "title": "Masonry",
+    "description": "Continue Stone Installation",
+    "startDate": "2024-04-10",
+    "endDate": "2024-05-07",
+    "status": "pending",
+
+    "updated": "2024-03-05T18:58:03.848941Z",
+    "created": "2024-03-02T13:09:51.175017Z",
+    "color": "#ff9300",
+    "project": 39
+  },
+  {
+    "id": 55,
+
+    "title": "Masonry",
+    "description": "Continue Stone Installation",
+    "startDate": "2024-04-08",
+    "endDate": "2024-04-09",
+    "status": "pending",
+
+    "updated": "2024-03-05T18:58:09.567292Z",
+    "created": "2024-03-02T13:08:53.569996Z",
+    "color": "#b18cfe",
+    "project": 39
+  },
+  {
+    "id": 54,
+   "title": "Masonry",
+    "description": "Start Stone Installation",
+    "startDate": "2024-03-05",
+    "endDate": "2024-04-01",
+    "status": "pending",
+
+    "updated": "2024-03-05T19:21:17.032109Z",
+    "created": "2024-03-02T13:04:56.393287Z",
+    "color": "#ff9300",
+    "project": 39
+  }]
 class TaskViewSet(viewsets.ModelViewSet):
     parser_classes = (FormParser, MultiPartParser)
     queryset = Tasks.objects.all()
@@ -132,6 +189,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         serializ = serializer.TasksSerializer(data=requestData)
         serializ.is_valid(raise_exception=True)
         serializ.save()
+        serializer.sendMailOnTaskHandler(task= serializ.data['id'])
         return Response(serializ.data, status=status.HTTP_201_CREATED)
     @action(detail=True, methods=['GET'], url_path='project', serializer_class=serializer.GetTasksSerializer)
     def get_projects(self, request, pk =None):
@@ -144,4 +202,23 @@ class TaskViewSet(viewsets.ModelViewSet):
         tasks = Tasks.objects.filter(workers = pk)
         data = serializer.GetWorkerTasksSerializer(tasks, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['GET'], url_path='mail', serializer_class=serializer.GetWorkerTasksSerializer, permission_classes = [AllowAny])
+    def send_email_to_workers(self, request, pk =None):
+        print("before")
+        # SMTPMailService.send_mail_service(subject="test mail", message = "simple message", recipient_list = ['adnansadiqxyz@gmail.com'])
+        worker  = User.objects.get(id=76)
+        projects = Project.objects.filter(project_tasks__workers=worker).distinct()
+        serialize = serializer.GetWorkerProjectForMailSerializer(projects, many=True, context={'worker':worker})
+        print(projects)
+        print(serialize.data)
+        template_data={
+        'reciverName':worker.username,
+        'projects': serialize.data,
+        }
+
+        SMTPMailService.send_html_mail_service(subject="Your Assigned Tasks", template='tasks.html', template_data=template_data, recipient_list = ['raoarslan263@gmail.com'])
+        print("after")
+        
+        return Response(data='mail sent', status=status.HTTP_200_OK)
 
