@@ -82,7 +82,9 @@ def sendMailOnTaskHandler(task=0, action='create' ):
         print("inside func call")
         taskObj = get_object_or_404(Tasks, id=task)
         workers = taskObj.workers.all()
+        print("workers,", workers)
         worker_ids = [worker.id for worker in workers] 
+        print("worker ids", worker_ids)
         users = User.objects.filter(id__in=worker_ids)
         emails = [user.email for user in users]
         message='You have been assigned a new task. Please review the details below:'
@@ -115,7 +117,9 @@ class TasksSerializer(serializers.ModelSerializer):
             validated_data.get('description', existing_instance.description) != existing_instance.description or
             validated_data.get('startDate', existing_instance.startDate) != existing_instance.startDate or
             validated_data.get('endDate', existing_instance.endDate) != existing_instance.endDate or
+            validated_data.get('workers', existing_instance.workers) != existing_instance.workers or
             validated_data.get('status', existing_instance.status) != existing_instance.status):
+
             # Call the sendMailOnTaskHandler function if any of the specified fields have changed
             print("mail set func called")
             sendMailOnTaskHandler(task=updated_instance.pk, action='update')
