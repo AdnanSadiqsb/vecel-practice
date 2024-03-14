@@ -211,6 +211,20 @@ class TaskViewSet(viewsets.ModelViewSet):
         data = serializer.GetWorkerTasksSerializer(tasks, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
     
+    @action(detail=True, methods=['DELETE'], url_path='worker/(?P<worker>\d+)')
+    def delete_worker_tasks(self, request, pk=None, *args, **kwargs):
+        task = Tasks.objects.get(id=pk)
+        worker_id = kwargs.get('worker')
+        if worker_id is not None:
+            task.workers.remove(worker_id)
+            task.save()
+            return Response(data='Worker deleted from the task', status=status.HTTP_200_OK)
+        else:
+            return Response(data='Invalid worker ID provided', status=status.HTTP_400_BAD_REQUEST)
+
+    
+
+    
     @action(detail=True, methods=['GET'], url_path='worker-mail', permission_classes = [IsAuthenticated])
     def send_email_to_workers(self, request, pk =None):
         print("before")
@@ -218,13 +232,10 @@ class TaskViewSet(viewsets.ModelViewSet):
         worker  = User.objects.get(id=pk)
         projects = Project.objects.filter(project_tasks__workers=worker).distinct()
         serialize = serializer.GetWorkerProjectForMailSerializer(projects, many=True, context={'worker':worker})
-        print(projects)
-        print(serialize.data)
         template_data={
         'reciverName':worker.username,
         'projects': serialize.data,
         }
-
         SMTPMailService.send_html_mail_service(subject="Your Assigned Tasks", template='tasks.html', template_data=template_data, recipient_list = [worker.email])
         print("after")
         
