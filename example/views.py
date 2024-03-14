@@ -25,6 +25,14 @@ class UserViewSet(viewsets.ModelViewSet):
         users = User.objects.filter(role=role)
         data = self.get_serializer(users, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['GET'], url_path='by-role-option/(?P<role>[^/]+)', serializer_class=serializer.UserShortInfoSerializer)
+    def get_users_by_role_for_option(self, request, role =None):
+        users = User.objects.filter(role=role)
+        data = self.get_serializer(users, many=True).data  
+        return Response(data=data, status=status.HTTP_200_OK)
+
+    
 
 def get_and_authenticate_user(email, password):
     user = authenticate(username=email, password=password)
