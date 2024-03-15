@@ -85,7 +85,7 @@ def sendMailOnTaskHandler(task=0, action='create' ):
         print("workers,", workers)
         worker_ids = [worker.id for worker in workers] 
         print("worker ids", worker_ids)
-        users = User.objects.filter(id__in=worker_ids)
+        users = User.objects.filter(id__in=worker_ids, is_sentMail = True)
         emails = [user.email for user in users]
         message='You have been assigned a new task. Please review the details below:'
         subject = "New Task"
