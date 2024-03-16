@@ -156,7 +156,7 @@ class GetWorkerProjectForMailSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_tasks(self, obj):
-        print("context worker", self.context['worker'].id)
+
         tasks = obj.project_tasks.filter(workers = self.context['worker'].id)
         serializer = TasksSerializer(tasks, many=True)
         return serializer.data
