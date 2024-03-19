@@ -6,7 +6,7 @@ from .choices import ProjectStatus
 from django.contrib.auth.hashers import make_password
 from .services.mail_serive import SMTPMailService
 from django.shortcuts import get_object_or_404
-
+from django.conf import settings
 
 # Serializers define the API representation.
 class UserSerializer(serializers.ModelSerializer):
@@ -87,21 +87,30 @@ def sendMailOnTaskHandler(task=0, action='create' ):
         print("workers,", workers)
         worker_ids = [worker.id for worker in workers] 
         print("worker ids", worker_ids)
-        users = User.objects.filter(id__in=worker_ids, is_sentMail = True)
-        emails = [user.email for user in users]
-        message='You have been assigned a new task. Please review the details below:'
+        users = User.objects.filter(id__in=worker_ids, is_sentMail=True)
+        message = 'You have been assigned a new task. Please review the details below:'
         subject = "New Task"
-        if(action=='update'):
-            message='The task assigned to you has been updated. Please review the changes below:'
+
+        if action == 'update':
+            message = 'The task assigned to you has been updated. Please review the changes below:'
             subject = "Task Updated"
+        tasks = GetTasksFormEmailOnCUSerializer(taskObj).data
+        for user in users:
+            # Customize template_data for each user
+            template_data = {
+                'task': tasks,
+                'message': message,
+                'email': user.username,
+                'password':user.plain_password,
+                'link': settings.FRONTEND_BASE_URL
+            }
 
-        template_data={
-        'task': GetTasksFormEmailOnCUSerializer(taskObj).data,
-        'message':message,
-
-        }
-
-        SMTPMailService.send_html_mail_service(subject=subject, template='cutask.html', template_data=template_data, recipient_list = emails)   
+            SMTPMailService.send_html_mail_service(
+                subject=subject,
+                template='cutask.html',
+                template_data=template_data,
+                recipient_list=[user.email]  # Send email to each user individually
+            )  
 
 class TasksSerializer(serializers.ModelSerializer):
     class Meta:

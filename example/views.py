@@ -236,7 +236,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         'reciverName':worker.username,
         'projects': serialize.data,
         'email': worker.email,
-        'password':worker.password,
+        'password':worker.plain_password,
         'link': settings.FRONTEND_BASE_URL
         }
         SMTPMailService.send_html_mail_service(subject="Your Assigned Tasks", template='tasks.html', template_data=template_data, recipient_list = [worker.email])
