@@ -96,11 +96,12 @@ def sendMailOnTaskHandler(task=0, action='create' ):
             subject = "Task Updated"
         tasks = GetTasksFormEmailOnCUSerializer(taskObj).data
         for user in users:
+            print("user", user)
             # Customize template_data for each user
             template_data = {
                 'task': tasks,
                 'message': message,
-                'email': user.username,
+                'email': user.email,
                 'password':user.plain_password,
                 'link': settings.FRONTEND_BASE_URL
             }
