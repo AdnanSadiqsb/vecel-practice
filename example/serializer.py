@@ -12,10 +12,11 @@ from django.shortcuts import get_object_or_404
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        exclude = ["groups", "user_permissions", "is_superuser", "is_staff"]
+        exclude = ["groups", "user_permissions", "is_superuser", "is_staff", 'plain_password']
     
     def create(self, validated_data):
         # Encrypt the password before saving
+        validated_data['plain_password'] = validated_data.get('password')
         validated_data['password'] = make_password(validated_data.get('password'))
         validated_data['is_active'] = True
         # Check if role is 'admin', if yes, set is_superuser to True, otherwise False
@@ -32,6 +33,7 @@ class UserSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password', None)
         print("password", password)
         if password and len(password)<=12:
+            validated_data['plain_password'] = password
             validated_data['password'] = make_password(password)
             print("inside up")
 
@@ -95,7 +97,8 @@ def sendMailOnTaskHandler(task=0, action='create' ):
 
         template_data={
         'task': GetTasksFormEmailOnCUSerializer(taskObj).data,
-        'message':message
+        'message':message,
+
         }
 
         SMTPMailService.send_html_mail_service(subject=subject, template='cutask.html', template_data=template_data, recipient_list = emails)   

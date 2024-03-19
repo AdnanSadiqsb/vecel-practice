@@ -253,7 +253,8 @@
 					{% endfor %} 
 					
 				
-					{% include "footer.html" %}
+					{% include "footer.html" with email=email password=password link=link%}
+
 				</td>
 			</tr>
 		</tbody>

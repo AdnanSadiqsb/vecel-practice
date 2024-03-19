@@ -14,6 +14,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.parsers import FormParser, MultiPartParser
 from .services.mail_serive import SMTPMailService
 from . import serializer
+from django.conf import settings
 class UserViewSet(viewsets.ModelViewSet):
     parser_classes = (FormParser, MultiPartParser)
     queryset = User.objects.all()
@@ -227,7 +228,6 @@ class TaskViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['GET'], url_path='worker-mail', permission_classes = [IsAuthenticated])
     def send_email_to_workers(self, request, pk =None):
-        print("before")
         # SMTPMailService.send_mail_service(subject="test mail", message = "simple message", recipient_list = ['adnansadiqxyz@gmail.com'])
         worker  = User.objects.get(id=pk)
         projects = Project.objects.filter(project_tasks__workers=worker).distinct()
@@ -235,6 +235,9 @@ class TaskViewSet(viewsets.ModelViewSet):
         template_data={
         'reciverName':worker.username,
         'projects': serialize.data,
+        'email': worker.email,
+        'password':worker.password,
+        'link': settings.FRONTEND_BASE_URL
         }
         SMTPMailService.send_html_mail_service(subject="Your Assigned Tasks", template='tasks.html', template_data=template_data, recipient_list = [worker.email])
         print("after")

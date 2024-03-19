@@ -8,11 +8,12 @@ from django.dispatch import receiver
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     role = models.CharField(
-        max_length=20, choices=UserRole.choices, default=UserRole.ADMIN
+        max_length=200, choices=UserRole.choices, default=UserRole.ADMIN
     )
     avatar = models.FileField(upload_to="static/users_avatars", blank=True, null=True)
     is_active = models.BooleanField(default=True)
-    phoneNumber = models.CharField(max_length=20, null=True, blank=True)
+    plain_password = models.CharField(max_length = 100, null=True, blank=True)
+    phoneNumber = models.CharField(max_length=200, null=True, blank=True)
     first_name = None
     last_name = None
     username = models.CharField(max_length=100)
@@ -39,7 +40,7 @@ class Project(models.Model):
     startDate = models.DateField(null=True, blank=True)
     endDate = models.DateField(null=True, blank=True)
     managers = models.ManyToManyField(User, related_name='managers')
-    status = models.CharField(max_length=20, choices=ProjectStatus.choices, default=ProjectStatus.PENDING)
+    status = models.CharField(max_length=200, choices=ProjectStatus.choices, default=ProjectStatus.PENDING)
     is_active = models.BooleanField(default=True)
     address = models.CharField(max_length=100, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -61,11 +62,11 @@ class Tasks(models.Model):
     workers = models.ManyToManyField(User, related_name='task_workers')
     startDate = models.DateField(null=True, blank=True)
     endDate = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=ProjectStatus.choices, default=ProjectStatus.PENDING)
+    status = models.CharField(max_length=200, choices=ProjectStatus.choices, default=ProjectStatus.PENDING)
     is_active = models.BooleanField(default=True)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
-    color = models.CharField(max_length=20, default='#3788D8')
+    color = models.CharField(max_length=200, default='#3788D8')
     def __str__(self):
         return self.title
     
