@@ -8,6 +8,7 @@ from .services.mail_serive import SMTPMailService
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.db.models import Q
+from datetime import datetime
 # Serializers define the API representation.
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -84,9 +85,7 @@ def sendMailOnTaskHandler(task=0, action='create' ):
         print("inside func call")
         taskObj = get_object_or_404(Tasks, id=task)
         workers = taskObj.workers.all()
-        print("workers,", workers)
         worker_ids = [worker.id for worker in workers] 
-        print("worker ids", worker_ids)
         users = User.objects.filter(id__in=worker_ids, is_sentMail=True)
         message = 'You have been assigned a new task. Please review the details below:'
         subject = "New Task"
@@ -94,20 +93,29 @@ def sendMailOnTaskHandler(task=0, action='create' ):
         if action == 'update':
             message = 'The task assigned to you has been updated. Please review the changes below:'
             subject = "Task Updated"
-        tasks = GetTasksFormEmailOnCUSerializer(taskObj).data
+        task = GetTasksFormEmailOnCUSerializer(taskObj).data
+
+        start_obj = datetime.strptime(task['startDate'], "%Y-%m-%d")
+        end_obj = datetime.strptime(task['endDate'], "%Y-%m-%d")
+        task['startDate'] = start_obj.strftime("%a %m/%d/%y")
+        task['endDate'] = end_obj.strftime("%a %m/%d/%y")
+        current_datetime = datetime.now()
+        datetime_string = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
+        subject_with_datetime = f"{subject} - {datetime_string}"
+        print("subject", subject_with_datetime)
         for user in users:
             print("user", user)
             # Customize template_data for each user
             template_data = {
-                'task': tasks,
+                'task': task,
                 'message': message,
                 'email': user.email,
                 'password':user.plain_password,
                 'link': settings.FRONTEND_BASE_URL
             }
-
+            print("email", user.email)
             SMTPMailService.send_html_mail_service(
-                subject=subject,
+                subject=subject_with_datetime,
                 template='cutask.html',
                 template_data=template_data,
                 recipient_list=[user.email]  # Send email to each user individually

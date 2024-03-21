@@ -232,15 +232,28 @@ class TaskViewSet(viewsets.ModelViewSet):
         worker  = User.objects.get(id=pk)
         projects = Project.objects.filter(project_tasks__workers=worker).distinct()
         serialize = serializer.GetWorkerProjectForMailSerializer(projects, many=True, context={'worker':worker})
+        respData = serialize.data.copy()
+        for project in respData:
+            # Convert startDate and endDate format for each task in the project
+            for task in project["tasks"]:
+                task["startDate"] = datetime.strptime(task["startDate"], "%Y-%m-%d").strftime("%a %m/%d/%y")
+                task["endDate"] = datetime.strptime(task["endDate"], "%Y-%m-%d").strftime("%a %m/%d/%y")
+
+            # Convert startDate and endDate format for the project itself
+            project["startDate"] = datetime.strptime(project["startDate"], "%Y-%m-%d").strftime("%a %m/%d/%y")
+            project["endDate"] = datetime.strptime(project["endDate"], "%Y-%m-%d").strftime("%a %m/%d/%y")
         template_data={
         'reciverName':worker.username,
-        'projects': serialize.data,
+        'projects': respData,
         'email': worker.email,
         'password':worker.plain_password,
         'link': settings.FRONTEND_BASE_URL
         }
-        SMTPMailService.send_html_mail_service(subject="Your Assigned Tasks", template='tasks.html', template_data=template_data, recipient_list = [worker.email])
+        datetime_string = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        subject_with_datetime = f"Your Assigned Tasks - {datetime_string}"
+        print("projects", serialize.data)
+        SMTPMailService.send_html_mail_service(subject=subject_with_datetime, template='tasks.html', template_data=template_data, recipient_list = [worker.email])
         print("after")
         
-        return Response(data='mail sent', status=status.HTTP_200_OK)
+        return Response(data=respData, status=status.HTTP_200_OK)
 

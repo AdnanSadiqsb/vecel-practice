@@ -33,6 +33,10 @@
                                                                             {{message | safe}}  
 																		</p>
 
+																		<p style="font-size: 14px; margin-top: 10;margin-left: 10px; margin-bottom: 2px; color: white; ">To view your entire schedule please visit : <a href="{{link}}"> <span style="color: blue; font-size: 12px; background-color: white; padding: 3px 6px; border-radius: 5px;">{{link}}</span>  </a></p>
+																		<p style="font-size: 14px; margin-top: 10px;margin-left: 10px; margin-bottom: 2px; color: white; ">Your username is your emai: <span style="color: blue; font-size: 12px; background-color: white; padding: 3px 6px; border-radius: 5px;"> {{email}} </span></p>
+																		<p style="font-size: 14px; margin-top: 10px;margin-left: 10px; color: white;">Your password is: <strong> {{password}} </strong></p>
+
 																		
 
 
@@ -203,7 +207,7 @@
 														<tr>
 															<td class="pad" style="padding-bottom:20px;padding-left:5px;padding-right:5px;padding-top:20px;">
 																<div style="color:#66e0c3;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:14px;line-height:120%;text-align:center;mso-line-height-alt:16.8px;">
-																	<p style="margin: 0; word-break: break-word;"><strong>{{task.startDate|date:"D n/d/y" }}</strong></p>
+																	<p style="margin: 0; word-break: break-word;"><strong>{{task.startDate }}</strong></p>
 																	<p style="margin-top: 5px; color:whitesmoke; margin-bottom: 5px; word-break: break-word;"><strong>to</strong></p>
 																	<p style="margin: 0; word-break: break-word;"><strong>{{task.endDate}}</strong></p>
 																</div>
@@ -217,8 +221,9 @@
 															<td class="pad" style="padding-bottom:20px;padding-right:10px;padding-top:20px;">
 																<div style="color:#66e0c3;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:14px;line-height:120%;text-align:center;mso-line-height-alt:16.8px;">
 																	<p style="margin: 0; word-break: break-word;"><strong style="padding: 7px 12px; background-color: #202b72; border-radius: 5px; white-space: nowrap;">{{task.status}}</strong></p>
-																	<a style="margin-top: 10;" href="{{link}}"> <span style="color: white;"> click </span>  <strong style="color:#66e0c3;"> {{link}} </strong> <span style="color: white;"> here to view all tasks</span></a>
-
+																	<p style="margin-top: 20px;">
+																	<a  href="{{link}}"> <span style="color: white;">  </span>  <strong style="color:#66e0c3; text-decoration: underline;"> view </strong> </a>
+																</p>
 																</div>
 															</td>
 														</tr>

@@ -8,10 +8,11 @@
 		<tbody>
 			<tr>
 				<td>
-					{% include "header.html" %}
+					{% include "header.html"  with email=email password=password link=link%}
 				
 					<table class="row row-3" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 						<tbody>
+							
 							<tr>
 								<td>
 									<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #3f4b94; color: #000000; width: 600px; margin: 0 auto;" width="600">
@@ -26,15 +27,17 @@
 																		<p style="margin: 0; margin-left: 10px; font-size: 14px; text-align: left; mso-line-height-alt: 16.8px;"><span style="font-size:14px;">Hi, &nbsp; <span style="color:#66e0c3;"><strong>{{reciverName}}</strong></span></span></p>
 																		<br>
 																		<br>
-																		<p style="margin: 0; margin-left: 10px; font-size: 14px; text-align: left; mso-line-height-alt: 16.8px;">
+																		<p style="margin: 0; color: white; margin-left: 10px; font-size: 14px; text-align: left; mso-line-height-alt: 16.8px;">
 																			I hope this email finds you well.
 																		
+																			<br>
 																			<br>
 																			I'm reaching out to provide you with a list of tasks that you are assigned to. Please take a moment to review them
 																		</p>
 
-																		
-
+																			<p style="font-size: 14px; margin-top: 10;margin-left: 10px; margin-bottom: 2px; color: white; ">To view your entire schedule please visit : <a href="{{link}}"> <span style="color: blue; font-size: 12px; background-color: white; padding: 3px 6px; border-radius: 5px;">{{link}}</span>  </a></p>
+																			<p style="font-size: 14px; margin-top: 10px;margin-left: 10px; margin-bottom: 2px; color: white; ">Your username is your emai: <span style="color: blue; font-size: 12px; background-color: white; padding: 3px 6px; border-radius: 5px;"> {{email}} </span></p>
+																			<p style="font-size: 14px; margin-top: 10px;margin-left: 10px; color: white;">Your password is: <strong> {{password}} </strong></p>
 
 																	</div>
 																</div>
@@ -223,7 +226,7 @@
 														<tr>
 															<td class="pad" style="padding-bottom:20px;padding-left:5px;padding-right:5px;padding-top:20px;">
 																<div style="color:#66e0c3;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:14px;line-height:120%;text-align:center;mso-line-height-alt:16.8px;">
-																	<p style="margin: 0; word-break: break-word;"><strong>{{item.startDate|date:"D n/d/y" }}</strong></p>
+																	<p style="margin: 0; word-break: break-word;"><strong>{{item.startDate }}</strong></p>
 																	<p style="margin-top: 5px; color:whitesmoke; margin-bottom: 5px; word-break: break-word;"><strong>to</strong></p>
 																	<p style="margin: 0; word-break: break-word;"><strong>{{item.endDate}}</strong></p>
 																</div>
@@ -237,8 +240,9 @@
 															<td class="pad" style="padding-bottom:20px;padding-right:10px;padding-top:20px;">
 																<div style="color:#66e0c3;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:14px;line-height:120%;text-align:center;mso-line-height-alt:16.8px;">
 																	<p style="margin: 0; word-break: break-word;"><strong style="padding: 7px 12px; background-color: #202b72; border-radius: 5px; white-space: nowrap;">{{item.status}}</strong></p>
-																	<a style="margin-top: 10;" href="{{link}}"> <span style="color: white;"> click </span>  <strong style="color:#66e0c3;"> {{link}} </strong> <span style="color: white;"> here to view all tasks</span></a>
-
+																	<p style="margin-top: 20px;">
+																		<a  href="{{link}}"> <span style="color: white;">  </span>  <strong style="color:#66e0c3; text-decoration: underline;"> view </strong> </a>
+																	</p>
 																</div>
 															</td>
 														</tr>
