@@ -7,7 +7,7 @@ from django.contrib.auth.hashers import make_password
 from .services.mail_serive import SMTPMailService
 from django.shortcuts import get_object_or_404
 from django.conf import settings
-
+from django.db.models import Q
 # Serializers define the API representation.
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -130,7 +130,7 @@ class TasksSerializer(serializers.ModelSerializer):
             validated_data.get('description', existing_instance.description) != existing_instance.description or
             validated_data.get('startDate', existing_instance.startDate) != existing_instance.startDate or
             validated_data.get('endDate', existing_instance.endDate) != existing_instance.endDate or
-            validated_data.get('workers', existing_instance.workers) != existing_instance.workers or
+            # validated_data.get('workers', existing_instance.workers) != existing_instance.workers or
             validated_data.get('status', existing_instance.status) != existing_instance.status):
 
             # Call the sendMailOnTaskHandler function if any of the specified fields have changed
@@ -170,6 +170,8 @@ class GetWorkerProjectForMailSerializer(serializers.ModelSerializer):
 
     def get_tasks(self, obj):
 
-        tasks = obj.project_tasks.filter(workers = self.context['worker'].id)
+        tasks = obj.project_tasks.filter(
+            Q(workers=self.context['worker'].id) & ~Q(status=ProjectStatus.COMPLETED)
+        )        
         serializer = TasksSerializer(tasks, many=True)
         return serializer.data
