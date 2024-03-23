@@ -4,7 +4,8 @@ from django.db import models
 class UserRole(models.TextChoices):
     ADMIN = "admin"
     MANANGER = "manager"
-    WORKER = "worker"
+    CONTRACTOR = "contractor"
+    CLIENT = "client"
 
 class ProjectStatus(models.TextChoices):
     ACTIVE = "active"

@@ -74,3 +74,7 @@ class Tasks(models.Model):
         verbose_name = 'Task'
         verbose_name_plural ='Tasks'
         ordering = ['-created']
+
+
+class LastMail(models.Model):
+    sentAt = models.DateTimeField()
