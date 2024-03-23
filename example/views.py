@@ -202,13 +202,13 @@ class TaskViewSet(viewsets.ModelViewSet):
         workers = []
         if rqst=='all':
             workers = User.objects.filter(is_active = True, is_sentMail = True)
-
+            instance, created = LastMail.objects.get_or_create(defaults={'sentAt':timezone.now()})
+            instance.__dict__.update({'sentAt':timezone.now()})
+            instance.save()
         else:
             workers  = User.objects.filter(id=rqst)
-        instance, created = LastMail.objects.get_or_create(defaults={'sentAt':timezone.now()})
-        instance.__dict__.update({'sentAt':timezone.now()})
-        instance.save()
-        print(instance, created)
+   
+        
         print(workers)
         for worker in workers:
             sendTaskToWorker(worker)
