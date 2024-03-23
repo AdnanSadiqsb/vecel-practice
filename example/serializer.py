@@ -194,3 +194,9 @@ class GetWorkerProjectForMailSerializer(serializers.ModelSerializer):
         )        
         serializer = TasksSerializer(tasks, many=True)
         return serializer.data
+    
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
+class SendMailToWorkersSerializer(serializers.Serializer):
+    worker = serializers.CharField(max_length = 3, default='all')

@@ -3,7 +3,7 @@ from django.db import models
 import datetime
 from .choices import UserRole, ProjectStatus
 from django.dispatch import receiver
-
+from django.utils import timezone
 
 class User(AbstractUser):
     email = models.EmailField(unique=True)
@@ -75,6 +75,7 @@ class Tasks(models.Model):
         verbose_name_plural ='Tasks'
         ordering = ['-created']
 
-
+        
 class LastMail(models.Model):
     sentAt = models.DateTimeField()
+  

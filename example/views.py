@@ -3,7 +3,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from datetime import date, datetime
 from .choices import ProjectStatus
-from .models import User, Project, Tasks
+from .models import User, Project, Tasks, LastMail
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -15,6 +15,8 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from .services.mail_serive import SMTPMailService
 from . import serializer
 from django.conf import settings
+from django.db.models import Q
+from django.utils import timezone
 class UserViewSet(viewsets.ModelViewSet):
     parser_classes = (FormParser, MultiPartParser)
     queryset = User.objects.all()
@@ -107,8 +109,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
         pending_projects = projects.filter(status=ProjectStatus.PENDING).count()
         workers = User.objects.filter(role='worker').count()
         managers = User.objects.filter(role='manager').count()
+        last_mail_sent = LastMail.objects.first().sentAt
 
-        return Response(data={'all_project':all_projects, 'active_projects':active_projects, 'completed_projects': completed_projects, 'pending_projects':pending_projects, 'workers':workers, 'managers':managers}, status=status.HTTP_200_OK)
+        return Response(data={'all_project':all_projects, 'active_projects':active_projects, 'completed_projects': completed_projects, 'pending_projects':pending_projects, 'workers':workers, 'managers':managers, 'last_mail_sent': last_mail_sent}, status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['GET'], url_path='my-projects-or-admin', serializer_class=serializer.GetProjectSerializer)
     def get_my_projects_or_admin(self, request, pk =None):
@@ -120,64 +123,34 @@ class ProjectViewSet(viewsets.ModelViewSet):
         data = serializer.GetProjectSerializer(projects, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
     
-tasks_list = [
-  
+def sendTaskToWorker(worker):
+    print("mail sent called")
+    projects = Project.objects.filter(Q(project_tasks__workers=worker) & ~Q(status=ProjectStatus.COMPLETED)).distinct()
+    serialize = serializer.GetWorkerProjectForMailSerializer(projects, many=True, context={'worker':worker})
+    respData = serialize.data.copy()
+    for project in respData:
+        # Convert startDate and endDate format for each task in the project
+        for task in project["tasks"]:
+            task["startDate"] = datetime.strptime(task["startDate"], "%Y-%m-%d").strftime("%a %m/%d/%y")
+            task["endDate"] = datetime.strptime(task["endDate"], "%Y-%m-%d").strftime("%a %m/%d/%y")
 
-  {
-    "id": 57,
+        # Convert startDate and endDate format for the project itself
+        project["startDate"] = datetime.strptime(project["startDate"], "%Y-%m-%d").strftime("%a %m/%d/%y")
+        project["endDate"] = datetime.strptime(project["endDate"], "%Y-%m-%d").strftime("%a %m/%d/%y")
+    template_data={
+    'reciverName':worker.username,
+    'projects': respData,
+    'email': worker.email,
+    'password':worker.plain_password,
+    'link': settings.FRONTEND_BASE_URL
+    }
+    datetime_string = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    subject_with_datetime = f"Your Assigned Tasks - {datetime_string}"
+    print("temp data", template_data)
+    SMTPMailService.send_html_mail_service(subject=subject_with_datetime, template='tasks.html', template_data=template_data, recipient_list = [worker.email])
+    
 
-    "title": "Masonry",
-    "description": "Start Stone Installation",
-    "startDate": "2024-04-08",
-    "endDate": "2024-05-04",
-    "status": "pending",
 
-    "updated": "2024-03-05T18:57:44.244501Z",
-    "created": "2024-03-02T13:11:04.216375Z",
-    "color": "#7a4a00",
-    "project": 39
-  },
-  {
-    "id": 56,
-
-    "title": "Masonry",
-    "description": "Continue Stone Installation",
-    "startDate": "2024-04-10",
-    "endDate": "2024-05-07",
-    "status": "pending",
-
-    "updated": "2024-03-05T18:58:03.848941Z",
-    "created": "2024-03-02T13:09:51.175017Z",
-    "color": "#ff9300",
-    "project": 39
-  },
-  {
-    "id": 55,
-
-    "title": "Masonry",
-    "description": "Continue Stone Installation",
-    "startDate": "2024-04-08",
-    "endDate": "2024-04-09",
-    "status": "pending",
-
-    "updated": "2024-03-05T18:58:09.567292Z",
-    "created": "2024-03-02T13:08:53.569996Z",
-    "color": "#b18cfe",
-    "project": 39
-  },
-  {
-    "id": 54,
-   "title": "Masonry",
-    "description": "Start Stone Installation",
-    "startDate": "2024-03-05",
-    "endDate": "2024-04-01",
-    "status": "pending",
-
-    "updated": "2024-03-05T19:21:17.032109Z",
-    "created": "2024-03-02T13:04:56.393287Z",
-    "color": "#ff9300",
-    "project": 39
-  }]
 class TaskViewSet(viewsets.ModelViewSet):
     parser_classes = (FormParser, MultiPartParser)
     queryset = Tasks.objects.all()
@@ -222,38 +195,23 @@ class TaskViewSet(viewsets.ModelViewSet):
             return Response(data='Worker deleted from the task', status=status.HTTP_200_OK)
         else:
             return Response(data='Invalid worker ID provided', status=status.HTTP_400_BAD_REQUEST)
-
     
-
-    
-    @action(detail=True, methods=['GET'], url_path='worker-mail', permission_classes = [IsAuthenticated])
+    @action(detail=False, methods=['POST'], url_path='worker-mail', permission_classes = [IsAuthenticated], serializer_class=serializer.SendMailToWorkersSerializer)
     def send_email_to_workers(self, request, pk =None):
-        # SMTPMailService.send_mail_service(subject="test mail", message = "simple message", recipient_list = ['adnansadiqxyz@gmail.com'])
-        worker  = User.objects.get(id=pk)
-        projects = Project.objects.filter(project_tasks__workers=worker).distinct()
-        serialize = serializer.GetWorkerProjectForMailSerializer(projects, many=True, context={'worker':worker})
-        respData = serialize.data.copy()
-        for project in respData:
-            # Convert startDate and endDate format for each task in the project
-            for task in project["tasks"]:
-                task["startDate"] = datetime.strptime(task["startDate"], "%Y-%m-%d").strftime("%a %m/%d/%y")
-                task["endDate"] = datetime.strptime(task["endDate"], "%Y-%m-%d").strftime("%a %m/%d/%y")
+        rqst = request.data['worker']
+        workers = []
+        if rqst=='all':
+            workers = User.objects.filter(is_active = True, is_sentMail = True)
 
-            # Convert startDate and endDate format for the project itself
-            project["startDate"] = datetime.strptime(project["startDate"], "%Y-%m-%d").strftime("%a %m/%d/%y")
-            project["endDate"] = datetime.strptime(project["endDate"], "%Y-%m-%d").strftime("%a %m/%d/%y")
-        template_data={
-        'reciverName':worker.username,
-        'projects': respData,
-        'email': worker.email,
-        'password':worker.plain_password,
-        'link': settings.FRONTEND_BASE_URL
-        }
-        datetime_string = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        subject_with_datetime = f"Your Assigned Tasks - {datetime_string}"
-        print("projects", serialize.data)
-        SMTPMailService.send_html_mail_service(subject=subject_with_datetime, template='tasks.html', template_data=template_data, recipient_list = [worker.email])
-        print("after")
+        else:
+            workers  = User.objects.filter(id=rqst)
+        instance, created = LastMail.objects.get_or_create(defaults={'sentAt':timezone.now()})
+        instance.__dict__.update({'sentAt':timezone.now()})
+        instance.save()
+        print(instance, created)
+        print(workers)
+        for worker in workers:
+            sendTaskToWorker(worker)
         
-        return Response(data=respData, status=status.HTTP_200_OK)
+        return Response(data='mail sent to workers', status=status.HTTP_200_OK)
 
