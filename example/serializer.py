@@ -122,15 +122,23 @@ def sendMailOnTaskHandler(task=0, action='create' ):
             )  
 
 class TasksSerializer(serializers.ModelSerializer):
-    schedule_mode = serializers.BooleanField( write_only=True)
+    schedule_mode = serializers.BooleanField( write_only=True, required=False, default=False)
     class Meta:
         model = Tasks
         fields = '__all__'
     
+    def create(self, validated_data):
+        schedule_mode = validated_data.pop('schedule_mode', False)
+        created_instance = super().create(validated_data)
+        print("created instance", created_instance)
+        if schedule_mode:
+           sendMailOnTaskHandler(task=created_instance.pk) 
+        return created_instance
+    
     def update(self, instance, validated_data):
         # Fetch existing data from the database
-        existing_instance = Tasks.objects.get(pk=instance.pk)
         schedule_mode = validated_data.pop('schedule_mode', False)
+        existing_instance = Tasks.objects.get(pk=instance.pk)
         print("schedule mode", schedule_mode)
         # Call the super method to perform the update
         updated_instance = super().update(instance, validated_data)
