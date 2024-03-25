@@ -111,7 +111,7 @@ DATABASES = {
 
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {'api_key': {'type': 'apiKey', 'in': 'header', 'name': 'Authorization'}},
-    'REFETCH_SCHEMA_WITH_AUTH': True,
+    'REFETCH_SCHEMA_WITH_AUTH': False,
 }
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators

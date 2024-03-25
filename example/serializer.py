@@ -55,9 +55,32 @@ class EmptySerializer(serializers.Serializer):
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    clientInfo = serializers.JSONField(write_only=True, required =False)  # Serializer for creating client
+    contractorInfo = serializers.JSONField(write_only=True, required =False)
     class Meta:
         model = Project
         fields = '__all__'
+    
+
+    def create(self, validated_data):
+        # Extract clientInfo and contractorInfo data from validated_data
+        client_info_data = validated_data.pop('clientInfo', None)
+        contractor_info_data = validated_data.pop('contractorInfo', None)
+        if not validated_data.get('client', None) and client_info_data:
+            client = self.get_or_create_user(client_info_data, role='client', context=self.context)
+            validated_data['client'] = client
+        if not validated_data.get('contractor', None) and contractor_info_data:
+            contractor = self.get_or_create_user(contractor_info_data, role='contractor', context=self.context)
+            validated_data['contractor'] = contractor
+        # Create the project instance
+        return super().create(validated_data)
+
+    def get_or_create_user(self, user_data, role, context):
+        if user_data:
+            serializer = UserSerializer(data={**user_data, "role": role}, context=context)
+            serializer.is_valid(raise_exception=True)
+            return serializer.save()
+        return None
 
 class ProjectShortInfoSerializer(serializers.ModelSerializer):
     class Meta:
