@@ -118,8 +118,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
         print(request.user.role)
         projects = Project.objects.all()
         if request.user.role == 'manager':
-            print("manger", request.user.id)
-            projects = Project.objects.filter(managers=request.user.id)
+            projects = projects.filter(managers=request.user.id)
+        elif request.user.role == 'contractor':
+            projects = projects.filter(contractor=request.user.id)
+        elif request.user.role == 'client':
+            projects = projects.filter(client=request.user.id)
         data = serializer.GetProjectSerializer(projects, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
     
