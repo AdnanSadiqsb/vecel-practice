@@ -66,6 +66,8 @@ class ProjectShortInfoSerializer(serializers.ModelSerializer):
 
 class GetProjectSerializer(serializers.ModelSerializer):
     managers = UserShortInfoSerializer(many=True, read_only=True)
+    client = UserShortInfoSerializer(read_only=True)
+    contractor = UserShortInfoSerializer(read_only=True)
     total_tasks = serializers.SerializerMethodField()
     percentage  = serializers.SerializerMethodField()
     class Meta:

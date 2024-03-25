@@ -40,6 +40,8 @@ class Project(models.Model):
     startDate = models.DateField(null=True, blank=True)
     endDate = models.DateField(null=True, blank=True)
     managers = models.ManyToManyField(User, related_name='managers')
+    client = models.ForeignKey(User,related_name='client', on_delete=models.CASCADE, null=True, blank =True )
+    contractor = models.ForeignKey(User,related_name='contractor',on_delete=models.CASCADE, null=True, blank =True )
     status = models.CharField(max_length=200, choices=ProjectStatus.choices, default=ProjectStatus.PENDING)
     is_active = models.BooleanField(default=True)
     address = models.CharField(max_length=100, null=True, blank=True)
