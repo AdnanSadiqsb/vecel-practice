@@ -39,7 +39,7 @@ class Project(models.Model):
     
     startDate = models.DateField(null=True, blank=True)
     endDate = models.DateField(null=True, blank=True)
-    managers = models.ManyToManyField(User, related_name='managers')
+    managers = models.ManyToManyField(User, related_name='managers', null =True, blank=True)
     client = models.ForeignKey(User,related_name='client', on_delete=models.CASCADE, null=True, blank =True )
     contractor = models.ForeignKey(User,related_name='contractor',on_delete=models.CASCADE, null=True, blank =True )
     status = models.CharField(max_length=200, choices=ProjectStatus.choices, default=ProjectStatus.PENDING)
@@ -61,7 +61,7 @@ class Tasks(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='project_tasks')
     title = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
-    workers = models.ManyToManyField(User, related_name='task_workers')
+    workers = models.ManyToManyField(User, related_name='task_workers', null =True, blank = True)
     startDate = models.DateField(null=True, blank=True)
     endDate = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=200, choices=ProjectStatus.choices, default=ProjectStatus.PENDING)
