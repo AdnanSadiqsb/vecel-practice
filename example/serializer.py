@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.db.models import Q
 from datetime import datetime
+from django.db import transaction
 # Serializers define the API representation.
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -63,17 +64,19 @@ class ProjectSerializer(serializers.ModelSerializer):
     
 
     def create(self, validated_data):
-        # Extract clientInfo and contractorInfo data from validated_data
         client_info_data = validated_data.pop('clientInfo', None)
         contractor_info_data = validated_data.pop('contractorInfo', None)
-        if not validated_data.get('client', None) and client_info_data:
-            client = self.get_or_create_user(client_info_data, role='client', context=self.context)
-            validated_data['client'] = client
-        if not validated_data.get('contractor', None) and contractor_info_data:
-            contractor = self.get_or_create_user(contractor_info_data, role='contractor', context=self.context)
-            validated_data['contractor'] = contractor
-        # Create the project instance
-        return super().create(validated_data)
+        
+        with transaction.atomic():
+            if not validated_data.get('client', None) and client_info_data and client_info_data.get('email'):
+                client = self.get_or_create_user(client_info_data, role='client', context=self.context)
+                validated_data['client'] = client
+            
+            if not validated_data.get('contractor', None) and contractor_info_data and contractor_info_data.get('email'):
+                contractor = self.get_or_create_user(contractor_info_data, role='contractor', context=self.context)
+                validated_data['contractor'] = contractor
+        
+            return super().create(validated_data)
 
     def get_or_create_user(self, user_data, role, context):
         if user_data:
@@ -169,6 +172,8 @@ class TasksSerializer(serializers.ModelSerializer):
         updated_instance = super().update(instance, validated_data)
         if(schedule_mode):
             return updated_instance
+
+        # status = validated_data.get('status', no\)
         # Check if any of the specified fields have changed
         if (validated_data.get('title', existing_instance.title) != existing_instance.title or
             validated_data.get('description', existing_instance.description) != existing_instance.description or

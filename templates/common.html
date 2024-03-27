@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
+
+{% include "head.html" %}
+
+<body style="background-color: #202b72; margin: 0; padding: 0; -webkit-text-size-adjust: none; text-size-adjust: none;">
+	<table class="nl-container" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #202b72;">
+		<tbody>
+			<tr>
+				<td>
+					{% include "header.html"  with email=email password=password link=link%}
+				
+					<table class="row row-3" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+						<tbody>
+							
+							<tr>
+								<td>
+									<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #3f4b94; color: #000000; width: 600px; margin: 0 auto;" width="600">
+										<tbody>
+											<tr>
+												<td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
+													<table class="text_block block-1" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
+														<tr>
+															<td class="pad">
+																<div style="font-family: sans-serif">
+																	<div class style="font-size: 12px; font-family: Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif; mso-line-height-alt: 14.399999999999999px; color: #ffffff; line-height: 1.2;">
+																		<p style="margin: 0; margin-left: 10px; font-size: 14px; text-align: left; mso-line-height-alt: 16.8px;"><span style="font-size:14px;">Hi, &nbsp; <span style="color:#66e0c3;"><strong>{{reciverName}}</strong></span></span></p>
+																		<br>
+																		<br>
+																		<p style="margin: 0; color: white; margin-left: 10px; font-size: 14px; text-align: left; mso-line-height-alt: 16.8px;">
+																			I hope this email finds you well.
+																		
+																			<br>
+																			<br>
+																			I'm reaching out to provide you with a list of tasks that you are assigned to. Please take a moment to review them
+																			{{message | safe}}
+																		</p>
+
+				
+																	</div>
+																</div>
+															</td>
+														</tr>
+													</table>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</td>
+							</tr>
+							
+						</tbody>
+					</table>
+					
+					
+					
+
+		
+					
+				
+					{% include "footer.html" with email=email password=password link=link%}
+
+				</td>
+			</tr>
+		</tbody>
+	</table><!-- End -->
+</body>
+
+</html>
