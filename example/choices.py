@@ -6,6 +6,7 @@ class UserRole(models.TextChoices):
     MANANGER = "manager"
     CONTRACTOR = "contractor"
     CLIENT = "client"
+    WORKER = "worker"
 
 class ProjectStatus(models.TextChoices):
     ACTIVE = "active"

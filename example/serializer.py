@@ -148,6 +148,33 @@ def sendMailOnTaskHandler(task=0, action='create' ):
                 template_data=template_data,
                 recipient_list=[user.email]  # Send email to each user individually
             )  
+def sendMailToClientAndContractor(task):
+    print(task.project)
+    task= Tasks.objects.get(id=task)
+    if(task.project.client):
+        print("clint mail sent")
+        SMTPMailService.send_html_mail_service(
+        subject=f'{task.title} completed',
+        template='common.html',
+        template_data={
+            'message':'your task completed',
+            'recieverName':task.project.client.username
+        },
+        recipient_list=[task.project.client.email] 
+        )  
+
+    if(task.project.contractor):
+        print("clint mail sent")
+        SMTPMailService.send_html_mail_service(
+        subject=f'{task.title} completed',
+        template='common.html',
+        template_data={
+            'message':'your task completed',
+            'recieverName':task.project.contractor.username
+        },
+        recipient_list=[task.project.contractor.email]  # Send email to each user individually
+        )  
+
 
 class TasksSerializer(serializers.ModelSerializer):
     schedule_mode = serializers.BooleanField( write_only=True, required=False, default=False)
@@ -173,7 +200,10 @@ class TasksSerializer(serializers.ModelSerializer):
         if(schedule_mode):
             return updated_instance
 
-        # status = validated_data.get('status', no\)
+        status = validated_data.get('status', None)
+        if status == ProjectStatus.COMPLETED:
+            sendMailToClientAndContractor(task=updated_instance)
+          
         # Check if any of the specified fields have changed
         if (validated_data.get('title', existing_instance.title) != existing_instance.title or
             validated_data.get('description', existing_instance.description) != existing_instance.description or
