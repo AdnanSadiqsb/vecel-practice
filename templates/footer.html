@@ -14,11 +14,22 @@
                                 <table class="paragraph_block block-2" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
                                     <tr>
                                         <td class="pad">
+                                           
                                             <div style="color:#ffffff;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:12px;line-height:150%;text-align:center;mso-line-height-alt:18px;">
+                                                <!-- worker -->
+                                                {% if role == "worker" %}
                                                 <p style="margin-bottom:20px; word-break: break-word;"><span>You may change your password in your profile.
                                                 </span></p>
                                                 <p style="margin: 0; word-break: break-word;"><span>Thank you for choosing to work with Ibex Builder Studios.
                                                 </span></p>
+                                                {% elif role == "client" %}
+                                                    <!-- contractor -->
+                                                    <p style="margin: 0; word-break: break-word;"><span>Thank you for choosing to work with Ibex Builder Studios. We strive to deliver premium trade work, outstanding project management services and integral portfolio management.
+                                                    </span></p>
+                                                    {% elif role == "contractor" %}
+                                                    <p style="margin: 0; word-break: break-word;"><span>Thank you for choosing Ibex Builder Studios, premium trades for premier builders.
+                                                    </span></p>
+                                                    {% endif %}
                                             </div>
                                         </td>
                                     </tr>

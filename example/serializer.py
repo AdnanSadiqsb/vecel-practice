@@ -149,7 +149,7 @@ def sendMailOnTaskHandler(task=0, action='create' ):
                 recipient_list=[user.email]  # Send email to each user individually
             )  
 def sendMailToClientAndContractor(task):
-    print(task.project)
+   
     task= Tasks.objects.get(id=task)
     if(task.project.client):
         print("clint mail sent")
@@ -157,8 +157,18 @@ def sendMailToClientAndContractor(task):
         subject=f'{task.title} completed',
         template='common.html',
         template_data={
-            'message':'your task completed',
-            'recieverName':task.project.client.username
+            'message':f'''
+I am pleased to inform you that the task <b>{task.title}</b> has been successfully completed.
+<br>
+<br>
+<br>
+Please feel free to review the work at your earliest convenience. If you have any questions or require further assistance, do not hesitate to reach out to me.
+<br>
+<br>
+Thank you for entrusting us with this task. We look forward to continuing our collaboration in the future.
+''',
+            'reciverName':task.project.client.username,
+            'role':task.project.client.role
         },
         recipient_list=[task.project.client.email] 
         )  
@@ -169,8 +179,16 @@ def sendMailToClientAndContractor(task):
         subject=f'{task.title} completed',
         template='common.html',
         template_data={
-            'message':'your task completed',
-            'recieverName':task.project.contractor.username
+            'message':f'''
+I am pleased to inform you that the task <b>{task.title}</b> you were assigned has been successfully completed.  
+<br>
+<br>
+Your dedication and hard work have contributed significantly to the success of this project, and we sincerely appreciate your efforts.
+<br>
+Please feel free to review the completed work, and if you have any questions or require further clarification, don't hesitate to reach out.
+''',
+            'reciverName':task.project.contractor.username,
+            'role':task.project.contractor.role,
         },
         recipient_list=[task.project.contractor.email]  # Send email to each user individually
         )  
@@ -202,7 +220,7 @@ class TasksSerializer(serializers.ModelSerializer):
 
         status = validated_data.get('status', None)
         if status == ProjectStatus.COMPLETED:
-            sendMailToClientAndContractor(task=updated_instance)
+            sendMailToClientAndContractor(task=updated_instance.pk)
           
         # Check if any of the specified fields have changed
         if (validated_data.get('title', existing_instance.title) != existing_instance.title or
