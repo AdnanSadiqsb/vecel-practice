@@ -193,6 +193,26 @@ Please feel free to review the completed work, and if you have any questions or 
         recipient_list=[task.project.contractor.email]  # Send email to each user individually
         )  
 
+def newTaksMailToContractor(task):
+    task= Tasks.objects.get(id=task)
+    if(task.project.contractor):
+        print("clint mail sent")
+        SMTPMailService.send_html_mail_service(
+        subject=f'New task {task.title} ',
+        template='common.html',
+        template_data={
+            'message':f'''
+    I'm writing to inform you that a new task <b>{task.title}</b> has been assigned to you. Please log in to your profile to view the details of the task and get started at your earliest convenience.
+<br>
+<br>
+If you have any questions or need further clarification regarding the task, please don't hesitate to reach out to me.
+
+''',
+            'reciverName':task.project.contractor.username,
+            'role':task.project.contractor.role
+        },
+        recipient_list=[task.project.contractor.email] 
+        )  
 
 class TasksSerializer(serializers.ModelSerializer):
     schedule_mode = serializers.BooleanField( write_only=True, required=False, default=False)
@@ -204,6 +224,7 @@ class TasksSerializer(serializers.ModelSerializer):
         schedule_mode = validated_data.pop('schedule_mode', False)
         created_instance = super().create(validated_data)
         print("created instance", created_instance)
+        newTaksMailToContractor(task=created_instance.pk)
         if schedule_mode:
            sendMailOnTaskHandler(task=created_instance.pk) 
         return created_instance
