@@ -185,6 +185,7 @@ I am pleased to inform you that the task <b>{task.title}</b> you were assigned h
 <br>
 Your dedication and hard work have contributed significantly to the success of this project, and we sincerely appreciate your efforts.
 <br>
+<br>
 Please feel free to review the completed work, and if you have any questions or require further clarification, don't hesitate to reach out.
 ''',
             'reciverName':task.project.contractor.username,
@@ -236,12 +237,13 @@ class TasksSerializer(serializers.ModelSerializer):
         print("schedule mode", schedule_mode)
         # Call the super method to perform the update
         updated_instance = super().update(instance, validated_data)
+        if status == ProjectStatus.COMPLETED:
+            sendMailToClientAndContractor(task=updated_instance.pk)
         if(schedule_mode):
             return updated_instance
 
         status = validated_data.get('status', None)
-        if status == ProjectStatus.COMPLETED:
-            sendMailToClientAndContractor(task=updated_instance.pk)
+
           
         # Check if any of the specified fields have changed
         if (validated_data.get('title', existing_instance.title) != existing_instance.title or
