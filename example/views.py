@@ -109,9 +109,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
         pending_projects = projects.filter(status=ProjectStatus.PENDING).count()
         workers = User.objects.filter(role='worker').count()
         managers = User.objects.filter(role='manager').count()
+        clients = User.objects.filter(role='client').count()
+        contractors = User.objects.filter(role='contractor').count()
         last_mail_sent = LastMail.objects.first().sentAt
 
-        return Response(data={'all_project':all_projects, 'active_projects':active_projects, 'completed_projects': completed_projects, 'pending_projects':pending_projects, 'workers':workers, 'managers':managers, 'last_mail_sent': last_mail_sent}, status=status.HTTP_200_OK)
+        return Response(data={'all_project':all_projects, 'active_projects':active_projects, 'completed_projects': completed_projects, 'pending_projects':pending_projects, 'workers':workers, 'managers':managers, 'last_mail_sent': last_mail_sent, 'clients':clients, 'contractors':contractors}, status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['GET'], url_path='my-projects-or-admin', serializer_class=serializer.GetProjectSerializer)
     def get_my_projects_or_admin(self, request, pk =None):
@@ -124,6 +126,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
         elif request.user.role == 'client':
             projects = projects.filter(client=request.user.id)
         data = serializer.GetProjectSerializer(projects, many=True).data  
+        return Response(data=data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['GET'], url_path='client-projects', serializer_class=serializer.GetProjectSerializer)
+    def get_client_projects(self, request, pk =None):
+        print(request.user.role)
+        projects = Project.objects.filter(client=pk)
+        
+        data = serializer.GetClientProjectSerializer(projects, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
     
 def sendTaskToWorker(worker):

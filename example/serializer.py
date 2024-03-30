@@ -109,6 +109,68 @@ class GetProjectSerializer(serializers.ModelSerializer):
         return (completed_tasks / total_tasks) * 100
     
 
+class TasksSerializer(serializers.ModelSerializer):
+    schedule_mode = serializers.BooleanField( write_only=True, required=False, default=False)
+    class Meta:
+        model = Tasks
+        fields = '__all__'
+    
+    def create(self, validated_data):
+        schedule_mode = validated_data.pop('schedule_mode', False)
+        created_instance = super().create(validated_data)
+        print("created instance", created_instance)
+        newTaksMailToContractor(task=created_instance.pk)
+        if schedule_mode:
+           sendMailOnTaskHandler(task=created_instance.pk) 
+        return created_instance
+    
+    def update(self, instance, validated_data):
+        # Fetch existing data from the database
+        schedule_mode = validated_data.pop('schedule_mode', False)
+        existing_instance = Tasks.objects.get(pk=instance.pk)
+        print("schedule mode", schedule_mode)
+        # Call the super method to perform the update
+        updated_instance = super().update(instance, validated_data)
+        if status == ProjectStatus.COMPLETED:
+            sendMailToClientAndContractor(task=updated_instance.pk)
+        if(schedule_mode):
+            return updated_instance
+
+        status = validated_data.get('status', None)
+
+          
+        # Check if any of the specified fields have changed
+        if (validated_data.get('title', existing_instance.title) != existing_instance.title or
+            validated_data.get('description', existing_instance.description) != existing_instance.description or
+            validated_data.get('startDate', existing_instance.startDate) != existing_instance.startDate or
+            validated_data.get('endDate', existing_instance.endDate) != existing_instance.endDate or
+            validated_data.get('workers', existing_instance.workers) != existing_instance.workers or
+            validated_data.get('status', existing_instance.status) != existing_instance.status):
+
+            # Call the sendMailOnTaskHandler function if any of the specified fields have changed
+            print("mail set func called")
+            sendMailOnTaskHandler(task=updated_instance.pk, action='update')
+
+        return updated_instance
+
+
+class GetClientProjectSerializer(serializers.ModelSerializer):
+ 
+    total_tasks = serializers.SerializerMethodField()
+    percentage  = serializers.SerializerMethodField()
+    project_tasks = TasksSerializer(many=True, read_only=True)
+    class Meta:
+        model = Project
+        fields = '__all__'
+
+    get_total_tasks = lambda self, obj: obj.project_tasks.count()
+    def get_percentage(self, obj):
+        total_tasks = obj.project_tasks.count()
+        if total_tasks == 0:
+            return 0
+        completed_tasks = obj.project_tasks.filter(status=ProjectStatus.COMPLETED).count()
+        return (completed_tasks / total_tasks) * 100
+
 def sendMailOnTaskHandler(task=0, action='create' ):
         print("inside func call")
         taskObj = get_object_or_404(Tasks, id=task)
