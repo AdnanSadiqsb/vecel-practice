@@ -92,6 +92,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
         serializ.is_valid(raise_exception=True)
         serializ.save()
         return Response(serializ.data, status=status.HTTP_201_CREATED)
+
+    def list(self, request, *args, **kwargs):
+        tasks = Tasks.objects.all()
+        if(request.user.role == 'contractor'):
+            tsaks = tasks.objects.filter(project__contractor=request.user)
+        serilizer = serializer.TasksSerializer(tasks, many=True)
+        return Response(serilizer.data, status=status.HTTP_200_OK)
         
     
     @action(detail=False, methods=['GET'], url_path='projects', serializer_class=serializer.ProjectSerializer)
