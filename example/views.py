@@ -96,7 +96,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         tasks = Tasks.objects.all()
         if(request.user.role == 'contractor'):
-            tsaks = tasks.objects.filter(project__contractor=request.user)
+            tsaks = tasks.filter(project__contractor=request.user)
         serilizer = serializer.TasksSerializer(tasks, many=True)
         return Response(serilizer.data, status=status.HTTP_200_OK)
         
