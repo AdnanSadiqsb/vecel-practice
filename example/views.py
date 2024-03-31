@@ -94,10 +94,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response(serializ.data, status=status.HTTP_201_CREATED)
 
     def list(self, request, *args, **kwargs):
-        tasks = Tasks.objects.all()
+        projects = Project.objects.all()
         if(request.user.role == 'contractor'):
-            tsaks = tasks.filter(project__contractor=request.user)
-        serilizer = serializer.TasksSerializer(tasks, many=True)
+            projects = projects.filter(contractor=request.user)
+
+        serilizer = serializer.ProjectSerializer(projects, many=True)
+
         return Response(serilizer.data, status=status.HTTP_200_OK)
         
     
@@ -193,6 +195,13 @@ class TaskViewSet(viewsets.ModelViewSet):
         serializ.save()
         serializer.sendMailOnTaskHandler(task= serializ.data['id'])
         return Response(serializ.data, status=status.HTTP_201_CREATED)
+
+    def list(self, request, *args, **kwargs):
+        tasks = Tasks.objects.all()
+        if(request.user.role == 'contractor'):
+            tasks = tasks.filter(project__contractor=request.user)
+        serilizer = serializer.TasksSerializer(tasks, many=True)
+        return Response(serilizer.data, status=status.HTTP_200_OK)
     @action(detail=True, methods=['GET'], url_path='project', serializer_class=serializer.GetTasksSerializer)
     def get_projects(self, request, pk =None):
         users = Tasks.objects.filter(project=pk)
