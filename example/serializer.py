@@ -299,12 +299,12 @@ class TasksSerializer(serializers.ModelSerializer):
         print("schedule mode", schedule_mode)
         # Call the super method to perform the update
         updated_instance = super().update(instance, validated_data)
+        status = validated_data.get('status', None)
         if status == ProjectStatus.COMPLETED:
             sendMailToClientAndContractor(task=updated_instance.pk)
         if(schedule_mode):
             return updated_instance
 
-        status = validated_data.get('status', None)
 
           
         # Check if any of the specified fields have changed
