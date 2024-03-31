@@ -95,8 +95,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         projects = Project.objects.all()
-        if(request.user.role == 'contractor'):
-            projects = projects.filter(contractor=request.user)
+
 
         serilizer = serializer.ProjectSerializer(projects, many=True)
 
@@ -106,6 +105,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'], url_path='projects', serializer_class=serializer.ProjectSerializer)
     def get_all_projects(self, request, pk =None):
         projects = Project.objects.all()
+        if(request.user.role == 'contractor'):
+            projects = projects.filter(contractor=request.user)
         data = serializer.ProjectSerializer(projects, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
     
