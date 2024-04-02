@@ -201,7 +201,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         tasks = Tasks.objects.all()
         if(request.user.role == 'contractor'):
             tasks = tasks.filter(project__contractor=request.user)
-        serilizer = serializer.TasksSerializer(tasks, many=True)
+        serilizer = serializer.GetTasksSerializer(tasks, many=True)
         return Response(serilizer.data, status=status.HTTP_200_OK)
     @action(detail=True, methods=['GET'], url_path='project', serializer_class=serializer.GetTasksSerializer)
     def get_projects(self, request, pk =None):
