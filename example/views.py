@@ -97,7 +97,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         projects = Project.objects.all()
 
 
-        serilizer = serializer.ProjectSerializer(projects, many=True)
+        serilizer = serializer.GetProjectSerializer(projects, many=True)
 
         return Response(serilizer.data, status=status.HTTP_200_OK)
         
