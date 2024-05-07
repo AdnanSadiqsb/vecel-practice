@@ -17,6 +17,13 @@ from . import serializer
 from django.conf import settings
 from django.db.models import Q
 from django.utils import timezone
+import pandas as pd
+from datetime import timedelta
+from django.shortcuts import get_object_or_404
+import randomcolor
+
+
+
 class UserViewSet(viewsets.ModelViewSet):
     parser_classes = (FormParser, MultiPartParser)
     queryset = User.objects.all()
@@ -172,7 +179,17 @@ def sendTaskToWorker(worker):
     print("temp data", template_data)
     SMTPMailService.send_html_mail_service(subject=subject_with_datetime, template='tasks.html', template_data=template_data, recipient_list = [worker.email])
     
-
+def darken_color(color, factor=0.5):
+    """
+    Darken a color by a given factor.
+    Factor should be between 0 and 1.
+    """
+    r, g, b = color[0:3]  # Extract RGB components
+    return (
+        int(r * factor),
+        int(g * factor),
+        int(b * factor)
+    )
 
 class TaskViewSet(viewsets.ModelViewSet):
     parser_classes = (FormParser, MultiPartParser)
@@ -236,12 +253,42 @@ class TaskViewSet(viewsets.ModelViewSet):
             instance.__dict__.update({'sentAt':timezone.now()})
             instance.save()
         else:
-            workers  = User.objects.filter(id=rqst)
-   
-        
+            workers  = User.objects.filter(id=rqst)  
         print(workers)
         for worker in workers:
             sendTaskToWorker(worker)
         
         return Response(data='mail sent to workers', status=status.HTTP_200_OK)
+    
+
+    @action(detail=False, methods=['POST'], url_path='bulk-upload/(?P<project>\d+)', permission_classes = [AllowAny], serializer_class=serializer.addTasksXLSSErialixer, parser_classes = (FormParser, MultiPartParser))
+    def bulk_upload_tasks(self, request, project =None):
+
+        file = request.data['file']
+        print(file)
+        df = pd.read_excel(file)
+        # Read the Excel file and convert to a list of dictionaries
+        excel_data = df.to_dict(orient='records')
+
+        # Print the data
+        start = timezone.now().date()
+        end = timezone.now().date() + timedelta(days=4)
+        project = get_object_or_404(Project, id = project)
+        for row in excel_data:
+            print(row)
+            data = {
+                'project' : project,
+                'title' : row['Title'],
+                'description' : row['Description'],
+                'startDate' : start,
+                'endDate' : end,
+                'color':  randomcolor.RandomColor().generate()[0]
+
+            }
+            print(data)
+            task = Tasks.objects.create(**data)
+            print(task)
+        return Response(data='mail sent to workers', status=status.HTTP_200_OK)
+    
+    
 

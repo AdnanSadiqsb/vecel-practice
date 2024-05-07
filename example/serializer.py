@@ -366,3 +366,8 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField()
 class SendMailToWorkersSerializer(serializers.Serializer):
     worker = serializers.CharField(max_length = 3, default='all')
+
+
+
+class addTasksXLSSErialixer(serializers.Serializer):
+    file = serializers.FileField()
