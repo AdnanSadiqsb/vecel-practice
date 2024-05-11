@@ -21,6 +21,8 @@ import pandas as pd
 from datetime import timedelta
 from django.shortcuts import get_object_or_404
 import randomcolor
+import numpy as np  # Add this import statement
+
 
 
 
@@ -265,30 +267,31 @@ class TaskViewSet(viewsets.ModelViewSet):
     def bulk_upload_tasks(self, request, project =None):
 
         file = request.data['file']
-        print(file)
         df = pd.read_excel(file)
         # Read the Excel file and convert to a list of dictionaries
-        excel_data = df.to_dict(orient='records')
+        excel_data = df.replace({np.nan: ''}).to_dict(orient='records')
 
         # Print the data
         start = timezone.now().date()
         end = timezone.now().date() + timedelta(days=4)
         project = get_object_or_404(Project, id = project)
+        count  = 0
         for row in excel_data:
-            print(row)
             data = {
                 'project' : project,
                 'title' : row['Title'],
-                'description' : row['Description'],
+                'description' : row.get('Description',''),
                 'startDate' : start,
                 'endDate' : end,
-                'color':  randomcolor.RandomColor().generate()[0]
+                'color':  randomcolor.RandomColor().generate()[0],
+                'costCode': row.get('Cost Code', ''),
+                'quantity': row.get('Quantity', ''),
+                'unit': row.get('Unit', '')
 
             }
-            print(data)
+            count +=1
             task = Tasks.objects.create(**data)
-            print(task)
-        return Response(data='mail sent to workers', status=status.HTTP_200_OK)
+        return Response(data=f'{count} tasks are created successfully', status=status.HTTP_200_OK)
     
     
 

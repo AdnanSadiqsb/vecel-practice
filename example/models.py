@@ -4,7 +4,7 @@ import datetime
 from .choices import UserRole, ProjectStatus
 from django.dispatch import receiver
 from django.utils import timezone
-
+import randomcolor
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     role = models.CharField(
@@ -68,7 +68,11 @@ class Tasks(models.Model):
     is_active = models.BooleanField(default=True)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
-    color = models.CharField(max_length=200, default='#3788D8')
+
+    costCode = models.CharField(null=True, blank=True, max_length=1000)
+    quantity = models.CharField(null=True, blank=True,max_length=400)
+    unit = models.CharField(null=True, blank=True, max_length=200)
+    color = models.CharField(max_length=200, default=  randomcolor.RandomColor().generate()[0])
     def __str__(self):
         return self.title
     
