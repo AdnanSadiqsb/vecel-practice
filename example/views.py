@@ -148,7 +148,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response(data=data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['GET'], url_path='completed', serializer_class=serializer.GetProjectSerializer)
-    def get_my_projects_or_admin(self, request, pk =None):
+    def get_completed_projects(self, request, pk =None):
         print(request.user.role)
         projects = Project.objects.filter(status=ProjectStatus.COMPLETED)
         if request.user.role == 'manager':
