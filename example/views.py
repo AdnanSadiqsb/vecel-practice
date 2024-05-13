@@ -103,7 +103,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response(serializ.data, status=status.HTTP_201_CREATED)
 
     def list(self, request, *args, **kwargs):
-        projects = Project.objects.all()
+        projects = Project.objects.exclude(status=ProjectStatus.COMPLETED)
 
 
         serilizer = serializer.GetProjectSerializer(projects, many=True)
@@ -113,7 +113,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['GET'], url_path='projects', serializer_class=serializer.ProjectSerializer)
     def get_all_projects(self, request, pk =None):
-        projects = Project.objects.all()
+        projects = Project.objects.exclude(status=ProjectStatus.COMPLETED)
         if(request.user.role == 'contractor'):
             projects = projects.filter(contractor=request.user)
         data = serializer.ProjectSerializer(projects, many=True).data  
@@ -137,7 +137,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'], url_path='my-projects-or-admin', serializer_class=serializer.GetProjectSerializer)
     def get_my_projects_or_admin(self, request, pk =None):
         print(request.user.role)
-        projects = Project.objects.all()
+        projects = Project.objects.exclude(status=ProjectStatus.COMPLETED)
         if request.user.role == 'manager':
             projects = projects.filter(managers=request.user.id)
         elif request.user.role == 'contractor':
@@ -147,6 +147,21 @@ class ProjectViewSet(viewsets.ModelViewSet):
         data = serializer.GetProjectSerializer(projects, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['GET'], url_path='completed', serializer_class=serializer.GetProjectSerializer)
+    def get_my_projects_or_admin(self, request, pk =None):
+        print(request.user.role)
+        projects = Project.objects.filter(status=ProjectStatus.COMPLETED)
+        if request.user.role == 'manager':
+            projects = projects.filter(managers=request.user.id)
+        elif request.user.role == 'contractor':
+            projects = projects.filter(contractor=request.user.id)
+        elif request.user.role == 'client':
+            projects = projects.filter(client=request.user.id)
+        elif request.user.role == 'worker':
+            projects = projects.filter(project_tasks__workers=request.user.id)
+        data = serializer.GetProjectSerializer(projects, many=True).data  
+        return Response(data=data, status=status.HTTP_200_OK)
+    
     @action(detail=True, methods=['GET'], url_path='client-projects', serializer_class=serializer.GetProjectSerializer)
     def get_client_projects(self, request, pk =None):
         print(request.user.role)
