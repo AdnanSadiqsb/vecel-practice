@@ -292,7 +292,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         project = get_object_or_404(Project, id = project)
         count  = 0
         for row in excel_data:
-            if 'labour' in str(row.get('Cost Code', '')).lower():
+            if 'labor' in str(row.get('Cost Code', '')).lower():
                 data = {
                     'project': project,
                     'title': row['Title'],
