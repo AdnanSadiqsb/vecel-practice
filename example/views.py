@@ -292,20 +292,20 @@ class TaskViewSet(viewsets.ModelViewSet):
         project = get_object_or_404(Project, id = project)
         count  = 0
         for row in excel_data:
-            data = {
-                'project' : project,
-                'title' : row['Title'],
-                'description' : row.get('Description',''),
-                'startDate' : start,
-                'endDate' : end,
-                'color':  randomcolor.RandomColor().generate()[0],
-                'costCode': row.get('Cost Code', ''),
-                'quantity': row.get('Quantity', ''),
-                'unit': row.get('Unit', '')
-
-            }
-            count +=1
-            task = Tasks.objects.create(**data)
+            if 'labour' in str(row.get('Cost Code', '')).lower():
+                data = {
+                    'project': project,
+                    'title': row['Title'],
+                    'description': row.get('Description', ''),
+                    'startDate': start,
+                    'endDate': end,
+                    'color': randomcolor.RandomColor().generate()[0],
+                    'costCode': row.get('Cost Code', ''),
+                    'quantity': row.get('Quantity', ''),
+                    'unit': row.get('Unit', '')
+                }
+                count += 1
+                task = Tasks.objects.create(**data)
         return Response(data=f'{count} tasks are created successfully', status=status.HTTP_200_OK)
     
     
