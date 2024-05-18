@@ -171,9 +171,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
         data = serializer.GetClientProjectSerializer(projects, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
     
-    @action(detail=True, methods=['delete'], url_path='delete-doc-tasks/(?P<doc>.+)', serializer_class=serializer.DeleteUploadedFileSerializer)
-    def delete_uploaded_file(self, request, pk =None, doc = None):
-        doc_name = doc
+    @action(detail=True, methods=['patch'], url_path='delete-doc-tasks', serializer_class=serializer.DeleteUploadedFileSerializer)
+    def delete_uploaded_file(self, request, pk =None):
+        doc_name = request.data['document_name']
         project = get_object_or_404(Project, id = pk, uploaded_files__contains = [doc_name])
         project.uploaded_files.remove(doc_name)
         Tasks.objects.filter(fileName = doc_name, project = project).delete()

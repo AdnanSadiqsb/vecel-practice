@@ -112,8 +112,7 @@ class GetProjectSerializer(serializers.ModelSerializer):
         return (completed_tasks / total_tasks) * 100
     
 class DeleteUploadedFileSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField()
+    document_name = serializers.CharField()
 
 class TasksSerializer(serializers.ModelSerializer):
     schedule_mode = serializers.BooleanField( write_only=True, required=False, default=False)
