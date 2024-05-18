@@ -130,7 +130,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         managers = User.objects.filter(role='manager').count()
         clients = User.objects.filter(role='client').count()
         contractors = User.objects.filter(role='contractor').count()
-        last_mail_sent = LastMail.objects.first().sentAt
+        last_mail_sent = LastMail.objects.first()
+        last_mail_sent = last_mail_sent.sentAt if last_mail_sent else None
 
         return Response(data={'all_project':all_projects, 'active_projects':active_projects, 'completed_projects': completed_projects, 'pending_projects':pending_projects, 'workers':workers, 'managers':managers, 'last_mail_sent': last_mail_sent, 'clients':clients, 'contractors':contractors}, status=status.HTTP_200_OK)
     
@@ -258,7 +259,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         data = serializer.GetWorkerTasksSerializer(tasks, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
     
-    @action(detail=True, methods=['DELETE'], url_path='worker/(?P<worker>\d+)')
+    @action(detail=True, methods=['DELETE'], url_path='worker/(?P<worker>[0-9a-f-]{36})')
     def delete_worker_tasks(self, request, pk=None, *args, **kwargs):
         task = Tasks.objects.get(id=pk)
         worker_id = kwargs.get('worker')
@@ -287,7 +288,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Response(data='mail sent to workers', status=status.HTTP_200_OK)
     
 
-    @action(detail=False, methods=['POST'], url_path='bulk-upload/(?P<project>\d+)', permission_classes = [AllowAny], serializer_class=serializer.addTasksXLSSErialixer, parser_classes = (FormParser, MultiPartParser))
+    @action(detail=False, methods=['POST'], url_path='bulk-upload/(?P<project>[0-9a-f-]{36})', permission_classes = [AllowAny], serializer_class=serializer.addTasksXLSSErialixer, parser_classes = (FormParser, MultiPartParser))
     def bulk_upload_tasks(self, request, project =None):
 
         file = request.data['file']
