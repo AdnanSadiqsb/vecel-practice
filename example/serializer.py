@@ -111,6 +111,9 @@ class GetProjectSerializer(serializers.ModelSerializer):
         completed_tasks = obj.project_tasks.filter(status=ProjectStatus.COMPLETED).count()
         return (completed_tasks / total_tasks) * 100
     
+class DeleteUploadedFileSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
 
 class TasksSerializer(serializers.ModelSerializer):
     schedule_mode = serializers.BooleanField( write_only=True, required=False, default=False)

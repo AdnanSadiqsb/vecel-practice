@@ -85,7 +85,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     parser_classes = (FormParser, MultiPartParser)
     queryset = Project.objects.all()
     serializer_class = serializer.ProjectSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return serializer.GetProjectSerializer
@@ -169,6 +169,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
         
         data = serializer.GetClientProjectSerializer(projects, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['delete'], url_path='delete-doc-tasks/(?P<doc>.+)', serializer_class=serializer.DeleteUploadedFileSerializer)
+    def delete_uploaded_file(self, request, pk =None, doc = None):
+        doc_name = doc
+        project = get_object_or_404(Project, id = pk, uploaded_files__contains = [doc_name])
+        project.uploaded_files.remove(doc_name)
+        Tasks.objects.filter(fileName = doc_name, project = project).delete()
+        project.save()
+        return Response(data='tasks delete success fully', status=status.HTTP_200_OK)
     
 def sendTaskToWorker(worker):
     print("mail sent called")
@@ -282,6 +291,11 @@ class TaskViewSet(viewsets.ModelViewSet):
     def bulk_upload_tasks(self, request, project =None):
 
         file = request.data['file']
+        print("file", file)
+        print(file.name)
+        print(datetime.now())
+        file_name   = f'{file.name} on {datetime.now()}'
+        print(file_name)
         df = pd.read_excel(file)
         # Read the Excel file and convert to a list of dictionaries
         excel_data = df.replace({np.nan: ''}).to_dict(orient='records')
@@ -302,10 +316,14 @@ class TaskViewSet(viewsets.ModelViewSet):
                     'color': randomcolor.RandomColor().generate()[0],
                     'costCode': row.get('Cost Code', ''),
                     'quantity': row.get('Quantity', ''),
-                    'unit': row.get('Unit', '')
+                    'unit': row.get('Unit', ''),
+                    'fileName':file_name
                 }
                 count += 1
                 task = Tasks.objects.create(**data)
+
+        project.uploaded_files.append(file_name)
+        project.save()
         return Response(data=f'{count} tasks are created successfully', status=status.HTTP_200_OK)
     
     
