@@ -7,7 +7,9 @@ from django.utils import timezone
 import randomcolor
 from django.contrib.postgres.fields import ArrayField
 
+import uuid
 class User(AbstractUser):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     role = models.CharField(
         max_length=200, choices=UserRole.choices, default=UserRole.ADMIN
@@ -35,6 +37,7 @@ def auto_delete_avatar(sender, instance, **kwargs):
 
 
 class Project(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
     image = models.FileField(upload_to="static/projects_images", blank=True, null=True)
@@ -65,6 +68,7 @@ class Project(models.Model):
         
 
 class Tasks(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='project_tasks')
     title = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
@@ -94,3 +98,8 @@ class Tasks(models.Model):
 class LastMail(models.Model):
     sentAt = models.DateTimeField()
   
+
+
+class Foo(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    bar = models.CharField(max_length=30)

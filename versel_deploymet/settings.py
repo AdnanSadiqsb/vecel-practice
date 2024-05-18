@@ -95,16 +95,26 @@ DATABASES = {
     #     "ENGINE": "django.db.backends.sqlite3",
     #     "NAME": BASE_DIR / "db.sqlite3",
     # }
+
+#     POSTGRES_URL="postgres://default:nq4X8BGTDKCu@ep-restless-cloud-a4msixdi-pooler.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require"
+# POSTGRES_PRISMA_URL="postgres://default:nq4X8BGTDKCu@ep-restless-cloud-a4msixdi-pooler.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require&pgbouncer=true&connect_timeout=15"
+# POSTGRES_URL_NO_SSL="postgres://default:nq4X8BGTDKCu@ep-restless-cloud-a4msixdi-pooler.us-east-1.aws.neon.tech:5432/verceldb"
+# POSTGRES_URL_NON_POOLING="postgres://default:nq4X8BGTDKCu@ep-restless-cloud-a4msixdi.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require"
+# POSTGRES_USER="default"
+# POSTGRES_HOST="ep-restless-cloud-a4msixdi-pooler.us-east-1.aws.neon.tech"
+# POSTGRES_PASSWORD="nq4X8BGTDKCu"
+# POSTGRES_DATABASE="verceldb"
+
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'verceldb',
         'USER': 'default',
-        'PASSWORD': 'Dl6Be9gnGQTs',
-        'HOST': 'ep-patient-moon-a4n5oni2-pooler.us-east-1.aws.neon.tech',
+        'PASSWORD': 'nq4X8BGTDKCu',
+        'HOST': 'ep-restless-cloud-a4msixdi-pooler.us-east-1.aws.neon.tech',
         'PORT': '5432',  # Assuming default PostgreSQL port
         'OPTIONS': {
             'sslmode': 'require',  # Ensures that SSL is used
-            'options': 'endpoint=ep-patient-moon-a4n5oni2-pooler'
+            'options': 'endpoint=ep-restless-cloud-a4msixdi-pooler'
         },
     }
 }
