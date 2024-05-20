@@ -292,11 +292,8 @@ class TaskViewSet(viewsets.ModelViewSet):
     def bulk_upload_tasks(self, request, project =None):
 
         file = request.data['file']
-        print("file", file)
-        print(file.name)
-        print(datetime.now())
+        
         file_name   = f'{file.name} on {datetime.now()}'
-        print(file_name)
         df = pd.read_excel(file)
         # Read the Excel file and convert to a list of dictionaries
         excel_data = df.replace({np.nan: ''}).to_dict(orient='records')

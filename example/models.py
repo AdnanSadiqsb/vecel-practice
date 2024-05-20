@@ -41,7 +41,7 @@ class Project(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
     image = models.FileField(upload_to="static/projects_images", blank=True, null=True)
-    
+    color = models.CharField(max_length=20, default='#2c3e50')
     startDate = models.DateField(null=True, blank=True)
     endDate = models.DateField(null=True, blank=True)
     managers = models.ManyToManyField(User, related_name='managers', null =True, blank=True)
@@ -70,6 +70,7 @@ class Project(models.Model):
 class Tasks(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='project_tasks')
+    color = models.CharField(max_length=200, null=True, blank=True)
     title = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
     workers = models.ManyToManyField(User, related_name='task_workers', null =True, blank = True)
@@ -83,7 +84,6 @@ class Tasks(models.Model):
     costCode = models.CharField(null=True, blank=True, max_length=1000)
     quantity = models.CharField(null=True, blank=True,max_length=400)
     unit = models.CharField(null=True, blank=True, max_length=200)
-    color = models.CharField(max_length=200, default=  randomcolor.RandomColor().generate()[0])
 
     fileName = models.CharField(null=True, blank=True, max_length=200)
     def __str__(self):
@@ -93,7 +93,10 @@ class Tasks(models.Model):
         verbose_name = 'Task'
         verbose_name_plural ='Tasks'
         ordering = ['-created']
-
+    def save(self, *args, **kwargs):
+        # Set the color of the task to match the color of the associated project
+        self.color = self.project.color
+        super().save(*args, **kwargs)
         
 class LastMail(models.Model):
     sentAt = models.DateTimeField()
