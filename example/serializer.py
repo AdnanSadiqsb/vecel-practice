@@ -96,6 +96,17 @@ class ProjectSerializer(serializers.ModelSerializer):
         
             return super().create(validated_data)
 
+
+    def update(self, instance, validated_data):
+        # Encrypt the password if it's present in validated_data
+        original_project = Project.objects.get(pk=instance.pk)
+        print("original_project", original_project.color)
+        print("instace", instance.color)
+        if original_project.color != instance.color:
+            Tasks.objects.filter(project=instance).update(color=instance.color)
+
+        return super().update(instance, validated_data)
+    
     def get_or_create_user(self, user_data, role, context):
         if user_data:
             serializer = UserSerializer(data={**user_data, "role": role}, context=context)
