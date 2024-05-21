@@ -73,7 +73,9 @@ class ProjectSerializer(serializers.ModelSerializer):
     
     def get_next_color(self):
         last_project = Project.objects.order_by('-id').first()
+        print("last project")
         if last_project:
+            print("inside idf ")
             last_color = last_project.color
             if last_color in colors:
                 next_index = (colors.index(last_color) + 1) % len(colors)
@@ -83,8 +85,9 @@ class ProjectSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         client_info_data = validated_data.pop('clientInfo', None)
         contractor_info_data = validated_data.pop('contractorInfo', None)
-        if 'color' not in validated_data or not validated_data['color']:
-            validated_data['color'] = self.get_next_color()
+        # if 'color' not in validated_data or not validated_data['color']:
+        print(self.get_next_color())
+        validated_data['color'] = self.get_next_color()
         with transaction.atomic():
             if not validated_data.get('client', None) and client_info_data and client_info_data.get('email'):
                 client = self.get_or_create_user(client_info_data, role='client', context=self.context)
