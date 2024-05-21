@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from example.models import  Project,Tasks
 
@@ -7,10 +7,11 @@ colors = [
     '#58cd32',
     '#7c8dad'
 ]
-@receiver(post_save, sender=Project)
-def set_color(sender, instance, created, **kwargs):
-    if created:
-        last_project = Project.objects.exclude(id=instance.id).order_by('-id').first()
+@receiver(pre_save, sender=Project)
+def set_color(sender, instance, **kwargs):
+    if not instance.pk:
+        # Set the color for new projects based on the last project's color
+        last_project = Project.objects.order_by('-id').first()
         if last_project:
             last_color = last_project.color
             if last_color in colors:
@@ -20,12 +21,11 @@ def set_color(sender, instance, created, **kwargs):
                 instance.color = colors[0]
         else:
             instance.color = colors[0]
-        instance.save()
-
     else:
-        # Check if the project's color has changed
-        project = instance
-        original_project = Project.objects.get(id=project.id)
-        if original_project.color != project.color:
-            # Update the color of all tasks associated with this project
-            Tasks.objects.filter(project=project).update(color=project.color)
+        print("update")
+        # Update task colors if the project's color has changed
+        original_project = Project.objects.get(pk=instance.pk)
+        print("original_project", original_project.color)
+        print("instace", instance.color)
+        if original_project.color != instance.color:
+            Tasks.objects.filter(project=instance).update(color=instance.color)
