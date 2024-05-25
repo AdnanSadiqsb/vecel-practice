@@ -102,7 +102,6 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         # Encrypt the password if it's present in validated_data
-        print("instace coloe", instance.color, "validate",validated_data['color'])
         if validated_data['color'] and validated_data['color'] != instance.color:
             print("inside condition")
             Tasks.objects.filter(project=instance).update(color=validated_data['color'])
