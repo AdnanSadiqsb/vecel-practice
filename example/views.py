@@ -2,6 +2,8 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from datetime import date, datetime
+from rest_framework.views import APIView
+from example.utils import make_paypal_payment, verify_paypal_payment
 from .choices import ProjectStatus
 from .models import User, Project, Tasks, LastMail
 from rest_framework import viewsets, status
@@ -324,5 +326,37 @@ class TaskViewSet(viewsets.ModelViewSet):
         project.save()
         return Response(data=f'{count} tasks are created successfully', status=status.HTTP_200_OK)
     
+
+
+class PaypalPaymentView(APIView):
+    """
+    endpoint for create payment url
+    """
+    def post(self, request, *args, **kwargs):
+        amount=20 # 20$ for example
+        status,payment_id,approved_url=make_paypal_payment(amount=amount,currency="USD",return_url="https://example.com/payment/paypal/success/",cancel_url="https://example.com")
+        if status:
+            # handel_subscribtion_paypal(plan=plan,user_id=request.user,payment_id=payment_id)
+            return Response({"success":True,"msg":"payment link has been successfully created","approved_url":approved_url},status=201)
+        else:
+            return Response({"success":False,"msg":"Authentication or payment failed"},status=400)
+
+
+
+class PaypalValidatePaymentView(APIView):
+    """
+    endpoint for validate payment 
+    """
+    # permission_classes=[IsAuthenticated,]
+    def post(self, request, *args, **kwargs):
+        # payment_id=request.data.get("payment_id")
+        payment_id= 'PAYID-M3AGIAA4AL50455CR637712P'
+        payment_status=verify_paypal_payment(payment_id=payment_id)
+        if payment_status:
+            # your business logic 
+             
+            return Response({"success":True,"msg":"payment improved"},status=200)
+        else:
+            return Response({"success":False,"msg":"payment failed or cancelled"},status=200)
     
 

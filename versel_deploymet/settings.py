@@ -189,3 +189,10 @@ EMAIL_HOST_PASSWORD = 'fokc ocot bmdu vgme'
 FRONTEND_BASE_URL = 'https://ibexbuildersstudio.netlify.app/'
 
 
+
+PAYPAL_ID = 'ASlo7ucI0cEAeu8EaKoZ9Ells47CzvgPROG7WwqNwWWtadEU-v6erJ-pHWrfce9vjauQrjEKgrW7A8XW'
+
+PAYPAL_SECRET= 'ECQbx29oyxpPq_HxS7CfKFxYjR_GdQ1M1xt6z2zRFDf1-bZEYdll6qjcyuWSO4hncOpUXM04z_Obeoie'
+PAYPAL_BASE_URL='https://api.sandbox.paypal.com'
+
+
