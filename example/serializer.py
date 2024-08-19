@@ -401,3 +401,9 @@ class SendMailToWorkersSerializer(serializers.Serializer):
 
 class addTasksXLSSErialixer(serializers.Serializer):
     file = serializers.FileField()
+
+
+
+class CreatePaypalLinkSerializer(serializers.Serializer):
+    amount = serializers.FloatField()
+    description = serializers.CharField()
