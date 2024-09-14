@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from datetime import date, datetime
 from rest_framework.views import APIView
 from example.services.paypal_service import make_paypal_payment, verify_paypal_payment, get_all_paypal_payments
-from .choices import ProjectStatus
+from .choices import ProjectStatus, UserRole
 from .models import User, Project, Tasks, LastMail
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -256,10 +256,19 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Response(data=data, status=status.HTTP_200_OK)
     
     @action(detail=True, methods=['GET'], url_path='worker-tasks', serializer_class=serializer.GetWorkerTasksSerializer)
-    def get_all_worker_tasks(self, request, pk =None):
+    def get_worker_tasks(self, request, pk =None):
         tasks = Tasks.objects.filter(workers = pk)
         data = serializer.GetWorkerTasksSerializer(tasks, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
+    
+
+    @action(detail=False, methods=['GET'], url_path='all-tasks', serializer_class=serializer.GetWorkerTasksSerializer)
+    def get_all_tasks(self, request, pk =None):
+        tasks = Tasks.objects.all()
+        data = serializer.TasksSerializer(tasks, many=True).data
+        return Response(data=data, status=status.HTTP_200_OK)
+
+
     
     @action(detail=True, methods=['DELETE'], url_path='worker/(?P<worker>[0-9a-f-]{36})')
     def delete_worker_tasks(self, request, pk=None, *args, **kwargs):
