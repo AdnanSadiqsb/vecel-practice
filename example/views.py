@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from datetime import date, datetime
 from rest_framework.views import APIView
 from example.services.paypal_service import make_paypal_payment, verify_paypal_payment, get_all_paypal_payments
+from example.shemas import get_company_tasks
 from .choices import ProjectStatus, UserRole
 from .models import User, Project, Tasks, LastMail
 from rest_framework import viewsets, status
@@ -25,6 +26,7 @@ from django.shortcuts import get_object_or_404
 import randomcolor
 import numpy as np  # Add this import statement
 
+from drf_yasg.utils import swagger_auto_schema
 
 
 
@@ -105,8 +107,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response(serializ.data, status=status.HTTP_201_CREATED)
 
     def list(self, request, *args, **kwargs):
-        projects = Project.objects.exclude(status=ProjectStatus.COMPLETED)
-
+        # projects = Project.objects.exclude(status=ProjectStatus.COMPLETED)
+        projects = Project.objects.exclude(status=ProjectStatus.COMPLETED).select_related('client', 'contractor').prefetch_related('managers', 'project_tasks', 'project_tasks__workers')
 
         serilizer = serializer.GetProjectSerializer(projects, many=True)
 
@@ -115,7 +117,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['GET'], url_path='projects', serializer_class=serializer.ProjectSerializer)
     def get_all_projects(self, request, pk =None):
-        projects = Project.objects.exclude(status=ProjectStatus.COMPLETED)
+        # projects = Project.objects.exclude(status=ProjectStatus.COMPLETED)
+        projects = Project.objects.exclude(status=ProjectStatus.COMPLETED).select_related('client', 'contractor').prefetch_related('managers', 'project_tasks', 'project_tasks__workers')
+
         if(request.user.role == 'contractor'):
             projects = projects.filter(contractor=request.user)
         data = serializer.ProjectSerializer(projects, many=True).data  
@@ -140,7 +144,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'], url_path='my-projects-or-admin', serializer_class=serializer.GetProjectSerializer)
     def get_my_projects_or_admin(self, request, pk =None):
         print(request.user.role)
-        projects = Project.objects.exclude(status=ProjectStatus.COMPLETED)
+        # projects = Project.objects.exclude(status=ProjectStatus.COMPLETED)
+        projects = Project.objects.exclude(status=ProjectStatus.COMPLETED).select_related('client', 'contractor').prefetch_related('managers', 'project_tasks', 'project_tasks__workers')
+
         if request.user.role == 'manager':
             projects = projects.filter(managers=request.user.id)
         elif request.user.role == 'contractor':
@@ -153,7 +159,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'], url_path='completed', serializer_class=serializer.GetProjectSerializer)
     def get_completed_projects(self, request, pk =None):
         print(request.user.role)
-        projects = Project.objects.filter(status=ProjectStatus.COMPLETED)
+        projects = Project.objects.filter(status=ProjectStatus.COMPLETED).select_related('client', 'contractor').prefetch_related('managers', 'project_tasks', 'project_tasks__workers')
+
         if request.user.role == 'manager':
             projects = projects.filter(managers=request.user.id)
         elif request.user.role == 'contractor':
@@ -168,8 +175,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['GET'], url_path='client-projects', serializer_class=serializer.GetProjectSerializer)
     def get_client_projects(self, request, pk =None):
         print(request.user.role)
-        projects = Project.objects.filter(client=pk)
-        
+        # projects = Project.objects.filter(client=pk)
+        projects = Project.objects.filter(client=pk).select_related('client', 'contractor').prefetch_related('managers', 'project_tasks', 'project_tasks__workers')
+
         data = serializer.GetClientProjectSerializer(projects, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
     
@@ -244,15 +252,31 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Response(serializ.data, status=status.HTTP_201_CREATED)
 
     def list(self, request, *args, **kwargs):
-        tasks = Tasks.objects.all()
+        tasks = Tasks.objects.select_related('project').prefetch_related('workers')
+
         if(request.user.role == 'contractor'):
             tasks = tasks.filter(project__contractor=request.user)
         serilizer = serializer.GetTasksSerializer(tasks, many=True)
         return Response(serilizer.data, status=status.HTTP_200_OK)
     @action(detail=True, methods=['GET'], url_path='project', serializer_class=serializer.GetTasksSerializer)
     def get_projects(self, request, pk =None):
-        users = Tasks.objects.filter(project=pk)
-        data = serializer.GetTasksSerializer(users, many=True).data  
+        tasks = Tasks.objects.select_related('project').prefetch_related('workers')
+
+        data = serializer.GetTasksSerializer(tasks, many=True).data  
+        return Response(data=data, status=status.HTTP_200_OK)
+    
+
+    @swagger_auto_schema(**get_company_tasks())
+    @action(detail=False, methods=['GET'], url_path='today-tasks', serializer_class=serializer.GetTasksSerializer, permission_classes = [AllowAny])
+    def get_today_tasks(self, request, pk =None):
+        today = timezone.now().date()
+        project = request.query_params.get('project', 'all')
+        todayTasks = Tasks.objects.select_related('project').prefetch_related('workers').filter(startDate__lte=today, endDate__gte=today)
+        # todayTasks = Tasks.objects.filter(startDate__lte=today, endDate__gte=today)
+
+        if project != 'all':
+            todayTasks = todayTasks.filter(project=project)
+        data = serializer.GetTasksSerializer(todayTasks, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
     
     @action(detail=True, methods=['GET'], url_path='worker-tasks', serializer_class=serializer.GetWorkerTasksSerializer)
@@ -264,7 +288,8 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['GET'], url_path='all-tasks', serializer_class=serializer.GetWorkerTasksSerializer)
     def get_all_tasks(self, request, pk =None):
-        tasks = Tasks.objects.all()
+        tasks = Tasks.objects.select_related('project').prefetch_related('workers')
+        
         data = serializer.TasksSerializer(tasks, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
 
