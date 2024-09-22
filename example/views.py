@@ -228,6 +228,31 @@ def darken_color(color, factor=0.5):
         int(b * factor)
     )
 
+
+import calendar
+
+def get_current_month_intervals():
+    today = timezone.now().date()
+    # Get the first and last day of the current month
+    first_day = today.replace(day=1)
+    last_day = today.replace(day=calendar.monthrange(today.year, today.month)[1])
+
+    # Calculate the range of days in the current month
+    days_in_month = (last_day - first_day).days + 1
+    interval_length = days_in_month // 7
+
+    # Create intervals by dividing the month into 7 parts
+    intervals = [(first_day + timedelta(days=i * interval_length),
+                  first_day + timedelta(days=(i + 1) * interval_length - 1)) for i in range(7)]
+    
+    # Adjust the last interval to end at the last day of the month
+    intervals[-1] = (intervals[-1][0], last_day)
+
+    # Format dates for response
+    dates = [interval[0].strftime('%Y-%m-%d') for interval in intervals]
+    return intervals, dates
+
+
 class TaskViewSet(viewsets.ModelViewSet):
     parser_classes = (FormParser, MultiPartParser)
     queryset = Tasks.objects.all()
@@ -258,6 +283,56 @@ class TaskViewSet(viewsets.ModelViewSet):
             tasks = tasks.filter(project__contractor=request.user)
         serilizer = serializer.GetTasksSerializer(tasks, many=True)
         return Response(serilizer.data, status=status.HTTP_200_OK)
+    
+    
+    @action(detail=False, methods=['GET'], url_path='dashboard-analaytics', serializer_class=serializer.GetTasksSerializer)
+    def get_dashboard_analaytics(self, request, pk =None):
+        intervals, dates = get_current_month_intervals()
+        series = {
+            'pending': [],
+            'completed': [],
+            'active': []
+        }
+
+        for start, end in intervals:
+            # Count tasks grouped by status within the interval
+            pending_count = Tasks.objects.filter(
+                startDate__lte=end, 
+                endDate__gte=start, 
+                status=ProjectStatus.PENDING
+            ).count()
+
+            completed_count = Tasks.objects.filter(
+                startDate__lte=end, 
+                endDate__gte=start, 
+                status=ProjectStatus.COMPLETED
+            ).count()
+
+            active_count = Tasks.objects.filter(
+                startDate__lte=end, 
+                endDate__gte=start, 
+                status=ProjectStatus.ACTIVE
+            ).count()
+
+            # Append counts to the respective series
+            series['pending'].append(pending_count)
+            series['completed'].append(completed_count)
+            series['active'].append(active_count)
+
+        # Format the response as per the required structure
+        response = {
+            'series': [
+                {'name': 'pending', 'data': series['pending']},
+                {'name': 'completed', 'data': series['completed']},
+                {'name': 'active', 'data': series['active']}
+            ],
+            'dates': dates
+        }
+
+
+        return Response(data=response, status=status.HTTP_200_OK)
+
+    
     @action(detail=True, methods=['GET'], url_path='project', serializer_class=serializer.GetTasksSerializer)
     def get_projects(self, request, pk =None):
         tasks = Tasks.objects.select_related('project').prefetch_related('workers').filter(project=pk)
