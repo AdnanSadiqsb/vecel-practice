@@ -260,7 +260,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Response(serilizer.data, status=status.HTTP_200_OK)
     @action(detail=True, methods=['GET'], url_path='project', serializer_class=serializer.GetTasksSerializer)
     def get_projects(self, request, pk =None):
-        tasks = Tasks.objects.select_related('project').prefetch_related('workers')
+        tasks = Tasks.objects.select_related('project').prefetch_related('workers').filter(project=pk)
 
         data = serializer.GetTasksSerializer(tasks, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
