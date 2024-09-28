@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 import datetime
-from .choices import UserRole, ProjectStatus
+from .choices import UserRole, ProjectStatus, TaskPeriority
 from django.dispatch import receiver
 from django.utils import timezone
 import randomcolor
@@ -22,6 +22,8 @@ class User(AbstractUser):
     last_name = None
     username = models.CharField(max_length=100)
     is_sentMail = models.BooleanField(default=False)
+
+    supplier = models.ForeignKey('self', on_delete=models.CASCADE, related_name='worker_supplier', null=True, blank=True)
 
     class Meta:
         ordering = ['-date_joined']
@@ -50,6 +52,11 @@ class Project(models.Model):
     status = models.CharField(max_length=200, choices=ProjectStatus.choices, default=ProjectStatus.PENDING)
     is_active = models.BooleanField(default=True)
     address = models.CharField(max_length=100, null=True, blank=True)
+
+    wifiAvaliabe = models.BooleanField(default= False)
+    parkingAvaliable = models.BooleanField(default=False)
+    property_features = models.JSONField(null=True, blank=True)
+
     created = models.DateTimeField(auto_now_add=True)
 
     uploaded_files = ArrayField(
@@ -86,6 +93,9 @@ class Tasks(models.Model):
     unit = models.CharField(null=True, blank=True, max_length=200)
 
     fileName = models.CharField(null=True, blank=True, max_length=200)
+
+    note = models.CharField(null=True, blank=True)
+    priority = models.CharField(max_length=20, choices=TaskPeriority  , default=TaskPeriority.MEDIUM)
     def __str__(self):
         return self.title
     

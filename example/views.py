@@ -1,5 +1,7 @@
 # Create your views here.
 from rest_framework import viewsets
+from django.db.models.functions import TruncMonth
+
 from rest_framework.permissions import IsAuthenticated
 from datetime import date, datetime
 from rest_framework.views import APIView
@@ -18,7 +20,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from .services.mail_serive import SMTPMailService
 from . import serializer
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.utils import timezone
 import pandas as pd
 from datetime import timedelta
@@ -40,6 +42,35 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_users_by_role(self, request, role =None):
         users = User.objects.filter(role=role)
         data = self.get_serializer(users, many=True).data  
+        return Response(data=data, status=status.HTTP_200_OK)
+    
+
+    @action(detail=False, methods=['GET'], url_path='workers', serializer_class=serializer.WorkersListSerializer)
+    def get_all_workers(self, request):
+        users = User.objects.filter(role='worker')
+        
+        # Annotate users with task counts by status
+        users = users.annotate(
+            active_tasks=Count('task_workers', filter=Q(task_workers__status=ProjectStatus.ACTIVE)),
+            completed_tasks=Count('task_workers', filter=Q(task_workers__status=ProjectStatus.COMPLETED)),
+            cancelled_tasks=Count('task_workers', filter=Q(task_workers__status=ProjectStatus.CANCELLED)),
+            pending_tasks=Count('task_workers', filter=Q(task_workers__status=ProjectStatus.PENDING))
+        )
+        data = self.get_serializer(users, many=True).data
+        return Response(data=data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['GET'], url_path='contractors', serializer_class=serializer.ContractorssListSerializer)
+    def get_all_contractors(self, request):
+        users = User.objects.filter(role='contractor')
+        
+        # Annotate users with task counts by status
+        users = users.annotate(
+            active_project=Count('contractor', filter=Q(contractor__status=ProjectStatus.ACTIVE)),
+            completed_project=Count('contractor', filter=Q(contractor__status=ProjectStatus.COMPLETED)),
+            cancelled_project=Count('contractor', filter=Q(contractor__status=ProjectStatus.CANCELLED)),
+            pending_project=Count('contractor', filter=Q(contractor__status=ProjectStatus.PENDING))
+        )
+        data = self.get_serializer(users, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['GET'], url_path='by-role-option/(?P<role>[^/]+)', serializer_class=serializer.UserShortInfoSerializer)
@@ -124,6 +155,35 @@ class ProjectViewSet(viewsets.ModelViewSet):
             projects = projects.filter(contractor=request.user)
         data = serializer.ProjectSerializer(projects, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
+    
+
+    @action(detail=False, methods=['GET'], url_path='project-analaytics', serializer_class=serializer.ProjectSerializer)
+    def get_project_analytics(self, request, pk=None):
+        # Get the current year
+        current_year = datetime.now().year
+
+        # Annotate and count projects per month for the current year
+        project_counts = Project.objects.filter(startDate__year=current_year) \
+            .annotate(month=TruncMonth('startDate')) \
+            .values('month') \
+            .annotate(project_count=Count('id')) \
+            .order_by('month')
+
+        # Prepare response data
+        months = [calendar.month_abbr[i] for i in range(1, 13)]  # ['Jan', 'Feb', ..., 'Dec']
+        count_per_month = {calendar.month_abbr[i]: 0 for i in range(1, 13)}  # Initialize count for each month
+
+        # Fill in the count for each month from the project_counts queryset
+        for project in project_counts:
+            month_name = project['month'].strftime("%b")  # Convert month to abbreviated name, e.g., 'Jan'
+            count_per_month[month_name] = project['project_count']
+
+        response = {
+            'months': months,
+            'count': [count_per_month[month] for month in months]  # List of counts in the order of months
+        }
+
+        return Response(data=response, status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['GET'], url_path='dashboard', serializer_class=serializer.ProjectSerializer)
     def get_project_stats(self, request, pk =None):
@@ -354,6 +414,16 @@ class TaskViewSet(viewsets.ModelViewSet):
         data = serializer.GetTasksSerializer(todayTasks, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
     
+
+
+    @action(detail=False, methods=['GET'], url_path='worker-today/(?P<worker>[0-9a-f-]{36})', serializer_class=serializer.GetTasksSerializer, permission_classes = [AllowAny])
+    def get_worker_today_tasks(self, request,worker):
+        today = timezone.now().date()
+        todayTasks = Tasks.objects.select_related('project').prefetch_related('workers').filter(startDate__lte=today, endDate__gte=today, workers = worker)
+
+        data = serializer.GetTasksSerializer(todayTasks, many=True).data  
+        return Response(data=data, status=status.HTTP_200_OK)
+    
     @action(detail=True, methods=['GET'], url_path='worker-tasks', serializer_class=serializer.GetWorkerTasksSerializer)
     def get_worker_tasks(self, request, pk =None):
         tasks = Tasks.objects.filter(workers = pk)
@@ -365,7 +435,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     def get_all_tasks(self, request, pk =None):
         tasks = Tasks.objects.select_related('project').prefetch_related('workers')
         
-        data = serializer.TasksSerializer(tasks, many=True).data
+        data = serializer.GetWorkersTasksSerializer(tasks, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
 
 

@@ -43,6 +43,30 @@ class UserSerializer(serializers.ModelSerializer):
 
         return super().update(instance, validated_data)
 
+
+class WorkersListSerializer(serializers.ModelSerializer):
+    # Define additional fields for task counts
+    active_tasks = serializers.IntegerField(read_only=True)
+    completed_tasks = serializers.IntegerField(read_only=True)
+    cancelled_tasks = serializers.IntegerField(read_only=True)
+    pending_tasks = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = User
+        exclude = ["groups", "user_permissions", "is_superuser", "is_staff", 'plain_password']
+
+class ContractorssListSerializer(serializers.ModelSerializer):
+    # Define additional fields for task counts
+    active_project = serializers.IntegerField(read_only=True)
+    completed_project = serializers.IntegerField(read_only=True)
+    cancelled_project = serializers.IntegerField(read_only=True)
+    pending_project = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = User
+        exclude = ["groups", "user_permissions", "is_superuser", "is_staff", 'plain_password']
+
+
 class UserShortInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -372,6 +396,13 @@ class GetTasksSerializer(serializers.ModelSerializer):
 class GetWorkerTasksSerializer(serializers.ModelSerializer):
     workers = UserShortInfoSerializer(many=True, read_only=True)
     project  = ProjectShortInfoSerializer(read_only=True)
+    class Meta:
+        model = Tasks
+        fields = '__all__'
+
+
+class GetWorkersTasksSerializer(serializers.ModelSerializer):
+    projectInfo  = ProjectShortInfoSerializer(source='project', read_only=True)
     class Meta:
         model = Tasks
         fields = '__all__'
