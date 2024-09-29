@@ -419,10 +419,18 @@ class TaskViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'], url_path='worker-today/(?P<worker>[0-9a-f-]{36})', serializer_class=serializer.GetTasksSerializer, permission_classes = [AllowAny])
     def get_worker_today_tasks(self, request,worker):
         today = timezone.now().date()
-        todayTasks = Tasks.objects.select_related('project').prefetch_related('workers').filter(startDate__lte=today, endDate__gte=today, workers = worker)
-
+        workerTasks = Tasks.objects.select_related('project').prefetch_related('workers').filter( workers = worker)
+        todayTasks = workerTasks.filter(startDate__lte=today, endDate__gte=today,)
         data = serializer.GetTasksSerializer(todayTasks, many=True).data  
-        return Response(data=data, status=status.HTTP_200_OK)
+        status_counts = workerTasks.values('status').annotate(count=Count('id'))
+        task_status_count = {status_count['status']: status_count['count'] for status_count in status_counts}
+
+        print(status_counts)
+        respData = {
+            'tasks': data,
+            'stats': task_status_count
+        } 
+        return Response(data=respData, status=status.HTTP_200_OK)
     
     @action(detail=True, methods=['GET'], url_path='worker-tasks', serializer_class=serializer.GetWorkerTasksSerializer)
     def get_worker_tasks(self, request, pk =None):
