@@ -96,13 +96,13 @@ def verify_paypal_payment(payment_id):
     if payment_details_response.status_code != 200:
         raise Exception('Failed to retrieve PayPal payment details.')
 
-    payment_status = payment_details_response.json()['state']
-    if payment_status == 'approved':
+    return payment_details_response.json()
+    # if payment_status == 'approved':
         # Payment is successful, process the order
         # Retrieve additional payment details if needed
-        payer_email = payment_details_response.json()['payer']['payer_info']['email']
+        # payer_email = payment_details_response.json()['payer']['payer_info']['email']
         # ... process the order ...
-        return True
-    else:
+        # return True
+    # else:
         # Payment failed or was canceled
-        return False
+        # return False

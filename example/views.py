@@ -528,7 +528,7 @@ class PaypalPaymentView(viewsets.GenericViewSet):
         status,payment_id,approved_url=make_paypal_payment(amount=request.data['amount'],description=request.data['description'], currency="USD",return_url="https://example.com/payment/paypal/success/",cancel_url="https://example.com")
         if status:
             # handel_subscribtion_paypal(plan=plan,user_id=request.user,payment_id=payment_id)
-            return Response({"success":True,"msg":"payment link has been successfully created","approved_url":approved_url},status=201)
+            return Response({"success":True,"msg":"payment link has been successfully created","approved_url":approved_url, 'id': payment_id},status=201)
         else:
             return Response({"success":False,"msg":"Authentication or payment failed"},status=400)
         
@@ -538,6 +538,13 @@ class PaypalPaymentView(viewsets.GenericViewSet):
 
         payments = get_all_paypal_payments()
         return Response(data=payments,status=201)
+
+    
+    @action(detail=False, methods=['GET'], url_path='payment/(?P<payId>[^/.]+)', serializer_class=serializer.CreatePaypalLinkSerializer)
+    def get_payment_by_id(self, request, payId):
+
+        payment=verify_paypal_payment(payment_id=payId)
+        return Response(data=payment,status=201)
        
 
 
