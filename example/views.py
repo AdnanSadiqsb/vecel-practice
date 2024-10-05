@@ -5,7 +5,7 @@ from django.db.models.functions import TruncMonth
 from rest_framework.permissions import IsAuthenticated
 from datetime import date, datetime
 from rest_framework.views import APIView
-from example.services.paypal_service import make_paypal_payment, verify_paypal_payment, get_all_paypal_payments
+from example.services.paypal_service import make_paypal_payment, verify_paypal_payment, get_all_paypal_payments, execute_paypal_payment
 from example.shemas import get_company_tasks
 from .choices import ProjectStatus, UserRole
 from .models import User, Project, Tasks, LastMail
@@ -525,10 +525,10 @@ class PaypalPaymentView(viewsets.GenericViewSet):
     def create_payment_link(self, request):
 
         amount=20 # 20$ for example
-        status,payment_id,approved_url=make_paypal_payment(amount=request.data['amount'],description=request.data['description'], currency="USD",return_url="https://example.com/payment/paypal/success/",cancel_url="https://example.com")
+        resp=make_paypal_payment(amount=request.data['amount'],description=request.data['description'], currency="USD",return_url="https://ibexbuildersworkhub.netlify.app/",cancel_url="https://example.com")
         if status:
             # handel_subscribtion_paypal(plan=plan,user_id=request.user,payment_id=payment_id)
-            return Response({"success":True,"msg":"payment link has been successfully created","approved_url":approved_url, 'id': payment_id},status=201)
+            return Response({"success":True,"msg":"payment link has been successfully created","resp": resp},status=201)
         else:
             return Response({"success":False,"msg":"Authentication or payment failed"},status=400)
         
@@ -544,7 +544,28 @@ class PaypalPaymentView(viewsets.GenericViewSet):
     def get_payment_by_id(self, request, payId):
 
         payment=verify_paypal_payment(payment_id=payId)
+                
         return Response(data=payment,status=201)
+    
+
+    @action(detail=False, methods=['GET'], url_path='execute-payment/(?P<payId>[^/.]+)', serializer_class=serializer.CreatePaypalLinkSerializer)
+    def execute_payment(self, request, payId):
+
+        payment=verify_paypal_payment(payment_id=payId)
+        payer  = payment.get('payer', None)
+        if payer:
+            execute_paypal_payment(payment_id=payment['id'], payer_id= payment['payer']['payer_info']['payer_id'])
+        else:
+            return Response(data='payment is not approved yet',status=400)
+        
+        return Response(data=payment,status=201)
+    
+
+    # @action(detail=False, methods=['GET'], url_path='payment/(?P<payId>[^/.]+)', serializer_class=serializer.CreatePaypalLinkSerializer)
+    # def get_payment_by_id(self, request, payId):
+
+    #     payment=verify_paypal_payment(payment_id=payId)
+    #     return Response(data=payment,status=201)
        
 
 

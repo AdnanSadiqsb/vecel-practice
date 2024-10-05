@@ -36,7 +36,7 @@ def make_paypal_payment(amount, description, currency, return_url, cancel_url):
     payment_id = payment_response.json()['id']
     approval_url = next(link['href'] for link in payment_response.json()['links'] if link['rel'] == 'approval_url')
 
-    return True,payment_id, approval_url
+    return payment_response.json()
 
 def get_all_paypal_payments():
 
@@ -106,3 +106,31 @@ def verify_paypal_payment(payment_id):
     # else:
         # Payment failed or was canceled
         # return False
+
+
+
+
+def execute_paypal_payment(payment_id, payer_id):
+    payment_execute_url = f'{base_url}/v1/payments/payment/{payment_id}/execute'
+    
+    # Access token retrieved earlier
+    access_token = get_paypal_access_token()
+    
+    # Prepare headers
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {access_token}'
+    }
+    
+    # Prepare body for the execute request
+    execute_payload = {
+        "payer_id": payer_id
+    }
+    
+    # Execute payment
+    response = requests.post(payment_execute_url, headers=headers, json=execute_payload)
+    
+    if response.status_code != 200:
+        raise Exception(f"Payment execution failed: {response.text}")
+    
+    return response.json()

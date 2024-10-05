@@ -190,9 +190,9 @@ FRONTEND_BASE_URL = 'https://ibexbuildersstudio.netlify.app/'
 
 
 
-PAYPAL_ID = 'Ad7oaLwXpRLpEtlUx1hk7JwgtRp8gOzcAu4Xv7gSAdsHv2YXA_A-rOdzIgbKoJsgcb8x11Gnu0vDsUow'
+PAYPAL_ID = 'AQdIN4BuFzhRSikJGrdSFgfy8jckkiGdBMYJnri2CH3Kq0sJuefkmYHnt7EBFp4nPTEWefw1cr9neZ8P'
 
-PAYPAL_SECRET= 'EPl_V7M7S-ZzajFmpZKcHdB2Mez2alBA4KCm8LHifw3uRIbnI1tMWhBHI0A2BrlK5sNAlRQnFhqkTs1K'
+PAYPAL_SECRET= 'EODq3hVDjOAa69SQea5bLvNd_Wsh_YlBcTX6LKJtOmm3IMpcDpnRA4VCL85tha6PcGtCbfiYxmQyqEmI'
 PAYPAL_BASE_URL='https://api.sandbox.paypal.com'
 
 
