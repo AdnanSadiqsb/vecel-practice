@@ -526,7 +526,7 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
     serializer_class = serializer.PayPalPaymentSerializer
     @action(detail=False, methods=['POST'], url_path='create-link', serializer_class=serializer.CreatePaypalLinkSerializer)
     def create_payment_link(self, request):
-        resp=make_paypal_payment(amount=request.data['amount'],description=request.data['description'], currency="USD",return_url="https://ibexbuildersworkhub.netlify.app/",cancel_url="https://example.com")
+        resp=make_paypal_payment(amount=request.data['amount'],description=request.data['description'], currency="USD",return_url="https://ibexbuildersworkhub.netlify.app/payment-success",cancel_url="https://ibexbuildersworkhub.netlify.app/payment-cancel")
 
         PayPalPayment.objects.create(
             amount = request.data['amount'],
