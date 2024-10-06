@@ -441,8 +441,6 @@ class CreatePaypalLinkSerializer(serializers.Serializer):
     description = serializers.CharField()
 
 
-
-
 class PayPalPaymentSerializer(serializers.ModelSerializer):
     client_info = UserShortInfoSerializer(source = 'client', read_only=True)
     created_by_info =  UserShortInfoSerializer(source = 'created_by', read_only=True)

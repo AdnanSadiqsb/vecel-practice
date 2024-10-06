@@ -33,9 +33,6 @@ def make_paypal_payment(amount, description, currency, return_url, cancel_url):
     if payment_response.status_code != 201:
         raise Exception('something went wrong while creating link')
 
-    payment_id = payment_response.json()['id']
-    approval_url = next(link['href'] for link in payment_response.json()['links'] if link['rel'] == 'approval_url')
-
     return payment_response.json()
 
 def get_all_paypal_payments():
@@ -79,7 +76,7 @@ def get_paypal_access_token():
     return access_token
 
 
-def verify_paypal_payment(payment_id):
+def get_paypal_payment_by_id(payment_id):
 
     payment_url = base_url + '/v1/payments/payment'
     # Request an access token
@@ -92,7 +89,6 @@ def verify_paypal_payment(payment_id):
 
     payment_details_url = f'{payment_url}/{payment_id}'
     payment_details_response = requests.get(payment_details_url, headers=payment_headers)
-    print(payment_details_response.text)
     if payment_details_response.status_code != 200:
         raise Exception('Failed to retrieve PayPal payment details.')
 

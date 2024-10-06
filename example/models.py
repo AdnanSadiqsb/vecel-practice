@@ -123,6 +123,7 @@ class PayPalPayment(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     amount =  models.FloatField(default=0.0)
     response = models.JSONField(null=True, blank=True)
+    PayementId  = models.CharField(max_length=300, null=True, blank=True)
     status  = models.CharField(null=True, blank=True, max_length=200, default='created')
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='pay_created', null =True, blank=True)
     client = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='client_pay', null =True, blank=True)

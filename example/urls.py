@@ -13,4 +13,5 @@ urlpatterns = [
     path('', include(router.urls)),
     # path('paypal/create/', PaypalPaymentView.as_view(), name='ordercreate'),
     path('paypal/validate/', PaypalValidatePaymentView.as_view(), name='paypalvalidate'),
+
 ]

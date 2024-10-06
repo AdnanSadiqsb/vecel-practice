@@ -1,11 +1,14 @@
 # Create your views here.
 from rest_framework import viewsets
 from django.db.models.functions import TruncMonth
+import json
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 
 from rest_framework.permissions import IsAuthenticated
 from datetime import date, datetime
 from rest_framework.views import APIView
-from example.services.paypal_service import make_paypal_payment, verify_paypal_payment, get_all_paypal_payments, execute_paypal_payment
+from example.services.paypal_service import make_paypal_payment, get_paypal_payment_by_id, get_all_paypal_payments, execute_paypal_payment
 from example.shemas import get_company_tasks
 from .choices import ProjectStatus, UserRole
 from .models import PayPalPayment, User, Project, Tasks, LastMail
@@ -523,16 +526,14 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
     serializer_class = serializer.PayPalPaymentSerializer
     @action(detail=False, methods=['POST'], url_path='create-link', serializer_class=serializer.CreatePaypalLinkSerializer)
     def create_payment_link(self, request):
-
-        amount=20 # 20$ for example
         resp=make_paypal_payment(amount=request.data['amount'],description=request.data['description'], currency="USD",return_url="https://ibexbuildersworkhub.netlify.app/",cancel_url="https://example.com")
 
         PayPalPayment.objects.create(
             amount = request.data['amount'],
             created_by = request.user,
             client = request.data.get('client', None),
-            response = resp
-
+            response = resp,
+            PayementId = resp['id']
             )
         if status:
             # handel_subscribtion_paypal(plan=plan,user_id=request.user,payment_id=payment_id)
@@ -551,7 +552,7 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
     @action(detail=False, methods=['GET'], url_path='payment/(?P<payId>[^/.]+)', serializer_class=serializer.CreatePaypalLinkSerializer)
     def get_payment_by_id(self, request, payId):
 
-        payment=verify_paypal_payment(payment_id=payId)
+        payment=get_paypal_payment_by_id(payment_id=payId)
                 
         return Response(data=payment,status=201)
     
@@ -559,22 +560,77 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
     @action(detail=False, methods=['GET'], url_path='execute-payment/(?P<payId>[^/.]+)', serializer_class=serializer.CreatePaypalLinkSerializer)
     def execute_payment(self, request, payId):
 
-        payment=verify_paypal_payment(payment_id=payId)
+        payment=get_paypal_payment_by_id(payment_id=payId)
         payer  = payment.get('payer', None)
         if payer:
             execute_paypal_payment(payment_id=payment['id'], payer_id= payment['payer']['payer_info']['payer_id'])
+            payment=get_paypal_payment_by_id(payment_id=payId)
+            PayPalPayment.objects.filter(PayementId = payId).update(response = payment, status = 'approved')
         else:
             return Response(data='payment is not approved yet',status=400)
         
         return Response(data=payment,status=201)
     
 
+
+    @action(detail=False, methods=['GET'], url_path='success/(?P<payId>[^/.]+)', serializer_class=serializer.CreatePaypalLinkSerializer)
+    def success_payment(self, request, payId):
+
+        payment=get_paypal_payment_by_id(payment_id=payId)
+        payer  = payment.get('payer', None)
+        if payer:
+            PayPalPayment.objects.filter(
+                Q(PayementId=payId) & (Q(status='created') | Q(status='cancel'))
+            ).update(response=payment, status='success')
+        else:
+            return Response(data='payer not pay the amount yet',status=400)
+        
+        return Response(data=payment,status=201)
+    
+
+    @action(detail=False, methods=['GET'], url_path='cancel/(?P<payId>[^/.]+)', serializer_class=serializer.CreatePaypalLinkSerializer)
+    def cancel_payment(self, request, payId):
+
+        payment=get_paypal_payment_by_id(payment_id=payId)
+        PayPalPayment.objects.filter(PayementId = payId, status = 'created').update(response = payment, status = 'cancel')        
+        return Response(data=payment,status=201)
+
+
+    @action(detail=False, methods=['POST'], url_path='webhook',)
+    def payment_webhook(self, request):
+
+        payload = json.loads(request.body.decode('utf-8'))
+
+        # Check the event type (e.g., payment sale completed)
+        event_type = payload.get('event_type')
+
+        # if event_type == 'PAYMENT.SALE.COMPLETED':
+            # Extract payment ID and other relevant data
+        resource = payload.get('resource')
+        payment_id = resource.get('parent_payment')  # Get the payment ID
+        status = resource.get('state')  # Check if it's 'completed'
+        payment_record = PayPalPayment.objects.get(PayementId=payment_id)
+        payment_record.status = status  # Update the status to completed
+        payment_record.response = resource  # Store the entire resource as the response
+        payment_record.save()
+        
+        return Response(data='payment status updated',status=201)
+    
+
+
+
+    
+    
+
     # @action(detail=False, methods=['GET'], url_path='payment/(?P<payId>[^/.]+)', serializer_class=serializer.CreatePaypalLinkSerializer)
     # def get_payment_by_id(self, request, payId):
 
-    #     payment=verify_paypal_payment(payment_id=payId)
+    #     payment=get_paypal_payment_by_id(payment_id=payId)
     #     return Response(data=payment,status=201)
        
+
+
+
 
 
 
@@ -587,7 +643,7 @@ class PaypalValidatePaymentView(APIView):
     def post(self, request, *args, **kwargs):
         # payment_id=request.data.get("payment_id")
         payment_id= 'PAYID-M3AGIAA4AL50455CR637712P'
-        payment_status=verify_paypal_payment(payment_id=payment_id)
+        payment_status=get_paypal_payment_by_id(payment_id=payment_id)
         if payment_status:
             # your business logic 
              
