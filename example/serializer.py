@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import User, Project, Tasks
+from .models import PayPalPayment, User, Project, Tasks
 from datetime import date
 from .choices import ProjectStatus
 from django.contrib.auth.hashers import make_password
@@ -437,4 +437,16 @@ class addTasksXLSSErialixer(serializers.Serializer):
 
 class CreatePaypalLinkSerializer(serializers.Serializer):
     amount = serializers.FloatField()
+    client =serializers.UUIDField(required = False)
     description = serializers.CharField()
+
+
+
+
+class PayPalPaymentSerializer(serializers.ModelSerializer):
+    client_info = UserShortInfoSerializer(source = 'client', read_only=True)
+    created_by_info =  UserShortInfoSerializer(source = 'created_by', read_only=True)
+
+    class Meta:
+        model = PayPalPayment
+        fields = '__all__'

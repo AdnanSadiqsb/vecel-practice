@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from example.services.paypal_service import make_paypal_payment, verify_paypal_payment, get_all_paypal_payments, execute_paypal_payment
 from example.shemas import get_company_tasks
 from .choices import ProjectStatus, UserRole
-from .models import User, Project, Tasks, LastMail
+from .models import PayPalPayment, User, Project, Tasks, LastMail
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -515,17 +515,25 @@ class TaskViewSet(viewsets.ModelViewSet):
     
 
 
-class PaypalPaymentView(viewsets.GenericViewSet):
+class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.DestroyModelMixin, mixins.RetrieveModelMixin):
     """
     endpoint for create payment url
     """
-    queryset = Tasks.objects.all()
-    serializer_class = serializer.TasksSerializer
+    queryset = PayPalPayment.objects.all()
+    serializer_class = serializer.PayPalPaymentSerializer
     @action(detail=False, methods=['POST'], url_path='create-link', serializer_class=serializer.CreatePaypalLinkSerializer)
     def create_payment_link(self, request):
 
         amount=20 # 20$ for example
         resp=make_paypal_payment(amount=request.data['amount'],description=request.data['description'], currency="USD",return_url="https://ibexbuildersworkhub.netlify.app/",cancel_url="https://example.com")
+
+        PayPalPayment.objects.create(
+            amount = request.data['amount'],
+            created_by = request.user,
+            client = request.data.get('client', None),
+            response = resp
+
+            )
         if status:
             # handel_subscribtion_paypal(plan=plan,user_id=request.user,payment_id=payment_id)
             return Response({"success":True,"msg":"payment link has been successfully created","resp": resp},status=201)

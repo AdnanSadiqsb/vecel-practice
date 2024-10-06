@@ -31,7 +31,7 @@ def make_paypal_payment(amount, description, currency, return_url, cancel_url):
     payment_response = requests.post(payment_url, data=json.dumps(payment_payload), headers=payment_headers)
     print(payment_response.text)
     if payment_response.status_code != 201:
-        return False , 'Failed to create PayPal payment.',None
+        raise Exception('something went wrong while creating link')
 
     payment_id = payment_response.json()['id']
     approval_url = next(link['href'] for link in payment_response.json()['links'] if link['rel'] == 'approval_url')

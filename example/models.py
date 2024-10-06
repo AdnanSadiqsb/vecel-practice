@@ -116,3 +116,14 @@ class LastMail(models.Model):
 class Foo(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     bar = models.CharField(max_length=30)
+
+
+
+class PayPalPayment(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    amount =  models.FloatField(default=0.0)
+    response = models.JSONField(null=True, blank=True)
+    status  = models.CharField(null=True, blank=True, max_length=200, default='created')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='pay_created', null =True, blank=True)
+    client = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='client_pay', null =True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
