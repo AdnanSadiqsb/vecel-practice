@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from datetime import date, datetime
 from rest_framework.views import APIView
 from example.services.paypal_service import make_paypal_payment, get_paypal_payment_by_id, get_all_paypal_payments, execute_paypal_payment
-from example.shemas import get_company_tasks
+from example.shemas import get_company_tasks, get_supplier_workers
 from .choices import ProjectStatus, UserRole
 from .models import PayPalPayment, User, Project, Tasks, LastMail
 from rest_framework import viewsets, status
@@ -47,11 +47,13 @@ class UserViewSet(viewsets.ModelViewSet):
         data = self.get_serializer(users, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
     
-
+    @swagger_auto_schema(**get_supplier_workers())
     @action(detail=False, methods=['GET'], url_path='workers', serializer_class=serializer.WorkersListSerializer)
     def get_all_workers(self, request):
+        supplier = request.query_params.get('supplier', None)
         users = User.objects.filter(role='worker')
-        
+        if supplier:
+            users = users.filter(supplier=supplier)
         # Annotate users with task counts by status
         users = users.annotate(
             active_tasks=Count('task_workers', filter=Q(task_workers__status=ProjectStatus.ACTIVE)),
@@ -73,6 +75,15 @@ class UserViewSet(viewsets.ModelViewSet):
             cancelled_project=Count('contractor', filter=Q(contractor__status=ProjectStatus.CANCELLED)),
             pending_project=Count('contractor', filter=Q(contractor__status=ProjectStatus.PENDING))
         )
+        data = self.get_serializer(users, many=True).data
+        return Response(data=data, status=status.HTTP_200_OK)
+    
+
+    @action(detail=False, methods=['GET'], url_path='suppliers', serializer_class=serializer.SupplierListSerializer)
+    def get_all_suppliers(self, request):
+        users = User.objects.filter(role='supplier')
+        
+
         data = self.get_serializer(users, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
     
@@ -244,6 +255,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
         data = serializer.GetClientProjectSerializer(projects, many=True).data  
         return Response(data=data, status=status.HTTP_200_OK)
     
+
+    @action(detail=True, methods=['GET'], url_path='contractor-projects', serializer_class=serializer.GetProjectSerializer)
+    def get_contractor_projects(self, request, pk =None):
+        # projects = Project.objects.filter(client=pk)
+        projects = Project.objects.filter(contractor=pk).select_related('client', 'contractor').prefetch_related('managers', 'project_tasks', 'project_tasks__workers')
+
+        data = serializer.GetClientProjectSerializer(projects, many=True).data  
+        return Response(data=data, status=status.HTTP_200_OK)
+    
+
     @action(detail=True, methods=['patch'], url_path='delete-doc-tasks', serializer_class=serializer.DeleteUploadedFileSerializer)
     def delete_uploaded_file(self, request, pk =None):
         doc_name = request.data['document_name']

@@ -67,6 +67,17 @@ class ContractorssListSerializer(serializers.ModelSerializer):
         exclude = ["groups", "user_permissions", "is_superuser", "is_staff", 'plain_password']
 
 
+
+class SupplierListSerializer(serializers.ModelSerializer):
+    # Define additional fields for task counts
+    total_workers = serializers.SerializerMethodField(read_only=True)
+    class Meta:
+        model = User
+        exclude = ["groups", "user_permissions", "is_superuser", "is_staff", 'plain_password', 'password', 'supplier']
+    
+    def get_total_workers(self, obj):
+        return User.objects.filter(supplier=obj).count()
+
 class UserShortInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
