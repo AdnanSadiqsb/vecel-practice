@@ -155,6 +155,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         # projects = Project.objects.exclude(status=ProjectStatus.COMPLETED)
         projects = Project.objects.exclude(status=ProjectStatus.COMPLETED).select_related('client', 'contractor').prefetch_related('managers', 'project_tasks', 'project_tasks__workers')
 
+        if request.user.role == 'manager':
+            projects = projects.filter(managers=request.user)
         serilizer = serializer.GetProjectSerializer(projects, many=True)
 
         return Response(serilizer.data, status=status.HTTP_200_OK)
@@ -365,6 +367,8 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         if(request.user.role == 'contractor'):
             tasks = tasks.filter(project__contractor=request.user)
+        if(request.user.role == 'manager'):
+            tasks = tasks.filter(project__managers=request.user)
         serilizer = serializer.GetTasksSerializer(tasks, many=True)
         return Response(serilizer.data, status=status.HTTP_200_OK)
     
