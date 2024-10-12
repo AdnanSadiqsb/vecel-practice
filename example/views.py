@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from datetime import date, datetime
 from rest_framework.views import APIView
 from example.services.paypal_service import make_paypal_payment, get_paypal_payment_by_id, get_all_paypal_payments, execute_paypal_payment
-from example.shemas import get_company_tasks, get_supplier_workers
+from example.shemas import get_company_tasks, get_manager_projects, get_supplier_workers
 from .choices import ProjectStatus, UserRole
 from .models import PayPalPayment, User, Project, Tasks, LastMail
 from rest_framework import viewsets, status
@@ -161,12 +161,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         return Response(serilizer.data, status=status.HTTP_200_OK)
         
-    
+    @swagger_auto_schema(**get_manager_projects())
     @action(detail=False, methods=['GET'], url_path='projects', serializer_class=serializer.ProjectSerializer)
     def get_all_projects(self, request, pk =None):
         # projects = Project.objects.exclude(status=ProjectStatus.COMPLETED)
-        projects = Project.objects.exclude(status=ProjectStatus.COMPLETED).select_related('client', 'contractor').prefetch_related('managers', 'project_tasks', 'project_tasks__workers')
-
+        manager = request.query_params.get('manager', None)
+        projects = Project.objects.select_related('client', 'contractor').prefetch_related('managers', 'project_tasks', 'project_tasks__workers')
+        if manager:
+            projects = projects.filter(managers=manager)
+        else:
+            projects = projects.exclude(status=ProjectStatus.COMPLETED)
         if(request.user.role == 'contractor'):
             projects = projects.filter(contractor=request.user)
         data = serializer.ProjectSerializer(projects, many=True).data  
@@ -448,11 +452,11 @@ class TaskViewSet(viewsets.ModelViewSet):
     def get_worker_today_tasks(self, request,worker):
         today = timezone.now().date()
         workerTasks = Tasks.objects.select_related('project').prefetch_related('workers').filter( workers = worker)
-        todayTasks = workerTasks.filter(startDate__lte=today, endDate__gte=today,)
-        data = serializer.GetTasksSerializer(todayTasks, many=True).data  
         status_counts = workerTasks.values('status').annotate(count=Count('id'))
         task_status_count = {status_count['status']: status_count['count'] for status_count in status_counts}
 
+        todayTasks = workerTasks.filter(startDate__lte=today, endDate__gte=today,)
+        data = serializer.GetTasksSerializer(todayTasks, many=True).data  
         print(status_counts)
         respData = {
             'tasks': data,
@@ -676,4 +680,3 @@ class PaypalValidatePaymentView(APIView):
         else:
             return Response({"success":False,"msg":"payment failed or cancelled"},status=200)
     
-
