@@ -109,6 +109,8 @@ class AuthViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=['POST', ],url_path='login',  serializer_class=serializer.LoginSerializer)
     def login(self, request):
         user = get_and_authenticate_user(email=request.data['email'], password=request.data['password'])
+        user.last_login = timezone.now()
+        user.save()
         data = serializer.UserSerializer(user).data  
         token, created = Token.objects.get_or_create(user=user)
         return Response(data={'user': data, 'token': token.key}, status=status.HTTP_200_OK)
@@ -166,9 +168,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def get_all_projects(self, request, pk =None):
         # projects = Project.objects.exclude(status=ProjectStatus.COMPLETED)
         manager = request.query_params.get('manager', None)
+        client = request.query_params.get('client', None)
         projects = Project.objects.select_related('client', 'contractor').prefetch_related('managers', 'project_tasks', 'project_tasks__workers')
         if manager:
             projects = projects.filter(managers=manager)
+        elif client:
+            projects = projects.filter(client=client)
         else:
             projects = projects.exclude(status=ProjectStatus.COMPLETED)
         if(request.user.role == 'contractor'):
