@@ -462,19 +462,29 @@ class TaskViewSet(viewsets.ModelViewSet):
         # Filter tasks for today
         todayTasks = workerTasks.filter(startDate__lte=today, endDate__gte=today)
 
-        # Calculate status counts for all tasks (workerTasks)
-        status_counts = workerTasks.values('status').annotate(count=Count('id'))
-        task_status_count = {status_count['status']: status_count['count'] for status_count in status_counts}
+        # Initialize a dictionary to count statuses
+        status_counts = {
+            'active': 0,
+            'pending': 0,
+            'completed': 0
+        }
+
+        # Manually count statuses for all worker tasks
+        for task in workerTasks:
+            if task.status in status_counts:
+                status_counts[task.status] += 1
 
         # Serialize today's tasks
         data = serializer.GetTasksSerializer(todayTasks, many=True).data
 
         respData = {
             'tasks': data,  # Only today's tasks
-            'stats': task_status_count,  # Status counts for all tasks
-            'version': '1.1'
+            'stats': status_counts,  # Status counts for all tasks
+            'version': '1.2'
         }
+
         return Response(data=respData, status=status.HTTP_200_OK)
+
 
     
     @action(detail=True, methods=['GET'], url_path='worker-tasks', serializer_class=serializer.GetWorkerTasksSerializer)
