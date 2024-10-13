@@ -452,34 +452,27 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Response(data=data, status=status.HTTP_200_OK)
     
 
-    @action(detail=False, methods=['GET'], url_path='worker-today/(?P<worker>[0-9a-f-]{36})', 
-            serializer_class=serializer.GetTasksSerializer, permission_classes=[AllowAny])
+    @action(detail=False, methods=['GET'], url_path='worker-today/(?P<worker>[0-9a-f-]{36})', serializer_class=serializer.GetTasksSerializer, permission_classes=[AllowAny])
     def get_worker_today_tasks(self, request, worker):
         today = timezone.now().date()
-        
-        # Get all tasks for the worker, filtering by today's date range
-        workerTasks = Tasks.objects.select_related('project') \
-            .prefetch_related('workers') \
-            .filter(workers=worker)
-        
+
+        # Get all tasks for the worker
+        workerTasks = Tasks.objects.select_related('project').prefetch_related('workers').filter(workers=worker)
+
         # Filter tasks for today
         todayTasks = workerTasks.filter(startDate__lte=today, endDate__gte=today)
-        
-        # Get the status counts for today's tasks
-        status_counts = todayTasks.values('status').annotate(count=Count('id'))
-        
-        # Convert status counts to a dictionary
+
+        # Calculate status counts only for today's tasks
+        status_counts = workerTasks.values('status').annotate(count=Count('id'))
         task_status_count = {status_count['status']: status_count['count'] for status_count in status_counts}
-        
+
         # Serialize today's tasks
         data = serializer.GetTasksSerializer(todayTasks, many=True).data
-        
-        # Prepare response data
+
         respData = {
             'tasks': data,
             'stats': task_status_count
         }
-        
         return Response(data=respData, status=status.HTTP_200_OK)
     
     @action(detail=True, methods=['GET'], url_path='worker-tasks', serializer_class=serializer.GetWorkerTasksSerializer)
