@@ -462,7 +462,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         # Filter tasks for today
         todayTasks = workerTasks.filter(startDate__lte=today, endDate__gte=today)
 
-        # Calculate status counts only for today's tasks
+        # Calculate status counts for all tasks (workerTasks)
         status_counts = workerTasks.values('status').annotate(count=Count('id'))
         task_status_count = {status_count['status']: status_count['count'] for status_count in status_counts}
 
@@ -470,10 +470,12 @@ class TaskViewSet(viewsets.ModelViewSet):
         data = serializer.GetTasksSerializer(todayTasks, many=True).data
 
         respData = {
-            'tasks': data,
-            'stats': task_status_count
+            'tasks': data,  # Only today's tasks
+            'stats': task_status_count,  # Status counts for all tasks
+            'version': '1.1'
         }
         return Response(data=respData, status=status.HTTP_200_OK)
+
     
     @action(detail=True, methods=['GET'], url_path='worker-tasks', serializer_class=serializer.GetWorkerTasksSerializer)
     def get_worker_tasks(self, request, pk =None):
