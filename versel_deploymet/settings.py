@@ -58,7 +58,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
+ALLOWED_HOSTS = ['*']
 ROOT_URLCONF = 'versel_deploymet.urls'
 
 TEMPLATES = [
@@ -196,3 +196,8 @@ PAYPAL_SECRET= 'EODq3hVDjOAa69SQea5bLvNd_Wsh_YlBcTX6LKJtOmm3IMpcDpnRA4VCL85tha6P
 PAYPAL_BASE_URL='https://api.sandbox.paypal.com'
 
 
+STRIPE_PUBLISHABLE_KEY = 'pk_test_51N0fyVG2H0mKD6f4izjOVvN7ijlQSYdFlgrwx8m6p1WNEvvilToEni7TAXDzcmUL1Sc43BEYZwE1hS30EA2LtmT0008ztaKD8P'
+STRIPE_SECRET_KEY = 'sk_test_51N0fyVG2H0mKD6f4oO42TDmT9Ib5W8UkI1vSpvM9LWhXf7TzEaiCwMLHro2AGYVpRcNRNGUZpVaNjMxAFNYlvo6D00e3qmIwF6'
+
+
+STRIPE_ENDPOINT_SECRET = 'whsec_43fd219353f572e8b6fb52eb8eed7216c79f435841e142a3c703c0a8857dbb63'

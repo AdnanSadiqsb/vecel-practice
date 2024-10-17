@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from rest_framework.permissions import IsAuthenticated
 from datetime import date, datetime
 from rest_framework.views import APIView
+import stripe
 from example.services.paypal_service import make_paypal_payment, get_paypal_payment_by_id, get_all_paypal_payments, execute_paypal_payment
 from example.shemas import get_company_tasks, get_manager_projects, get_supplier_workers
 from .choices import ProjectStatus, UserRole
@@ -667,6 +668,107 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
         payment_record.save()
         
         return Response(data='payment status updated',status=201)
+    
+
+    @action(detail=False, methods=['POST'], url_path='stripe-webhook')
+    def stripe_webhook(self, request):
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
+        payload = request.body
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+        event = None
+
+        if sig_header:
+            # Verify the signature header exists
+            try:
+                event = stripe.Webhook.construct_event(
+                    payload, sig_header, endpoint_secret
+                )
+            except ValueError:
+                # Invalid payload
+                return Response(data='Invalid payload', status=400)
+            except stripe.error.SignatureVerificationError:
+                # Invalid signature
+                return Response(data='Signature verification failed', status=400)
+        else:
+            # Skip signature verification for testing purposes
+            print("No signature header found, skipping signature verification.")
+            try:
+                event = stripe.Event.construct_from(
+                    json.loads(payload), stripe.api_key
+                )
+            except Exception:
+                return Response(data='Invalid payload', status=400)
+
+        # Process the event based on the type
+        payment_status = None
+        if event['type'] == 'payment_intent.succeeded':
+            payment_status = 'succeeded'
+        elif event['type'] == 'payment_intent.payment_failed':
+            payment_status = 'failed'
+        elif event['type'] == 'payment_intent.canceled':
+            payment_status = 'canceled'
+        elif event['type'] == 'payment_intent.processing':
+            payment_status = 'processing'
+        elif event['type'] == 'payment_intent.requires_action':
+            payment_status = 'requires_action'
+        else:
+            payment_status = 'unknown'  # For other unhandled event types
+
+        payment_id = event['data']['object']['id']
+        print("Payment ID:", payment_id)
+
+        # Update the PayPalPayment object with the received status
+        rows = PayPalPayment.objects.filter(PayementId=payment_id).update(
+            response=event,
+            status=payment_status
+        )
+        print("Updated rows:", rows)
+
+        return Response(data=f'Payment status updated: {payment_status}', status=201)
+    
+    @action(detail=False, methods=['POST'], url_path='stripe-session', serializer_class= serializer.CreatePaypalLinkSerializer)
+    def create_stripe_session(self, request):
+
+        domain_url = 'https://ibexbuildersworkhub.netlify.app/'
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        try:
+
+            checkout_session = stripe.checkout.Session.create(
+                success_url=domain_url + 'payment-success?session_id={CHECKOUT_SESSION_ID}',
+                cancel_url=domain_url + 'payment-cancel/',
+                payment_method_types=['card', 'us_bank_account'],
+
+                mode='payment',
+                line_items=[
+                    {
+                        'price_data': {
+                            'currency': 'usd',
+                            'product_data': {
+                                'name': 'T-shirt',
+                            },
+                            'unit_amount': request.data['amount'] *100,  # Amount in cents (2000 cents = 20 USD)
+                        },
+                        'quantity': 1,
+                    }
+                ]
+            )
+
+
+
+            createdObject = PayPalPayment.objects.create(
+            amount = request.data['amount'],
+            created_by = request.user,
+            client = request.data.get('client', None),
+            response = checkout_session,
+            PayementId = checkout_session['id'],
+            type = 'stripe'
+            )
+
+            print(checkout_session)
+            return Response({'session': checkout_session, 'url':checkout_session['url'], 'id': createdObject.id})
+        except Exception as e:
+            return Response({'error': str(e)})
     
 
 
