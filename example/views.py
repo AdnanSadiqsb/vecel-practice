@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from datetime import date, datetime
 from rest_framework.views import APIView
 import stripe
+import stripe.stripe_response
 from example.services.paypal_service import make_paypal_payment, get_paypal_payment_by_id, get_all_paypal_payments, execute_paypal_payment
 from example.shemas import get_company_tasks, get_manager_projects, get_supplier_workers
 from .choices import ProjectStatus, UserRole
@@ -688,7 +689,7 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
                 return Response(data='Invalid payload', status=400)
             except stripe.error.SignatureVerificationError:
                 # Invalid signature
-                return Response(data='Signature verification failed', status=400)
+                return Response(data=f'Signature verification failed {stripe.stripe_response} ', status=400)
         else:
             # Skip signature verification for testing purposes
             print("No signature header found, skipping signature verification.")
@@ -701,6 +702,7 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
 
         # Process the event based on the type
         payment_status = None
+
         if event['type'] == 'payment_intent.succeeded':
             payment_status = 'succeeded'
         elif event['type'] == 'payment_intent.payment_failed':
@@ -713,12 +715,12 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             payment_status = 'requires_action'
         else:
             payment_status = 'unknown'  # For other unhandled event types
-
+        print("event", event)
         # Extract payment details
         payment_intent = event['data']['object']
         payment_id = payment_intent['id']  # Extract the payment intent ID
         print("Payment ID:", payment_id)
-
+        print("status", payment_status)
         # Update the PayPalPayment object with the received status
         # Ensure PayPalPayment model has the necessary fields (PayementId, response, status)
         rows = PayPalPayment.objects.filter(PayementId=payment_id).update(
