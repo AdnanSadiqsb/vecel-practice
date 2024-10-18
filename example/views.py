@@ -669,7 +669,6 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
         
         return Response(data='payment status updated',status=201)
     
-
     @action(detail=False, methods=['POST'], url_path='stripe-webhook')
     def stripe_webhook(self, request):
         stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -715,18 +714,21 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
         else:
             payment_status = 'unknown'  # For other unhandled event types
 
-        payment_id = event['data']['object']['id']
+        # Extract payment details
+        payment_intent = event['data']['object']
+        payment_id = payment_intent['id']  # Extract the payment intent ID
         print("Payment ID:", payment_id)
 
         # Update the PayPalPayment object with the received status
+        # Ensure PayPalPayment model has the necessary fields (PayementId, response, status)
         rows = PayPalPayment.objects.filter(PayementId=payment_id).update(
-            response=event,
+            response=event,  # You can serialize this to a JSONField
             status=payment_status
         )
         print("Updated rows:", rows)
 
         return Response(data=f'Payment status updated: {payment_status}', status=201)
-    
+   
     @action(detail=False, methods=['POST'], url_path='stripe-session', serializer_class= serializer.CreatePaypalLinkSerializer)
     def create_stripe_session(self, request):
 
