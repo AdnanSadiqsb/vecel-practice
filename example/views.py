@@ -717,13 +717,13 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             payment_status = 'unknown'  # For other unhandled event types
         print("event", event)
         # Extract payment details
-        payment_intent = event['data']['object']
-        payment_id = payment_intent['id']  # Extract the payment intent ID
-        print("Payment ID:", payment_id)
+        metadata = event['data']['object'].get('metadata', {})
+        payment_record_id = metadata.get('payment_record_id')
+        print("Payment ID:", payment_record_id)
         print("status", payment_status)
         # Update the PayPalPayment object with the received status
         # Ensure PayPalPayment model has the necessary fields (PayementId, response, status)
-        rows = PayPalPayment.objects.filter(PayementId=payment_id).update(
+        rows = PayPalPayment.objects.filter(PayementId=payment_record_id).update(
             response=event,  # You can serialize this to a JSONField
             status=payment_status
         )
@@ -737,12 +737,19 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
         domain_url = 'https://ibexbuildersworkhub.netlify.app/'
         stripe.api_key = settings.STRIPE_SECRET_KEY
         try:
+            # Create a record in your database first
+            createdObject = PayPalPayment.objects.create(
+                amount=request.data['amount'],
+                created_by=request.user,
+                client=request.data.get('client', None),
+                type='stripe'
+            )
 
+            # Include your custom database ID (createdObject.id) in the session metadata
             checkout_session = stripe.checkout.Session.create(
                 success_url=domain_url + 'payment-success?session_id={CHECKOUT_SESSION_ID}',
                 cancel_url=domain_url + 'payment-cancel/',
                 payment_method_types=['card', 'us_bank_account'],
-
                 mode='payment',
                 line_items=[
                     {
@@ -751,30 +758,26 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
                             'product_data': {
                                 'name': 'T-shirt',
                             },
-                            'unit_amount': request.data['amount'] *100,  # Amount in cents (2000 cents = 20 USD)
+                            'unit_amount': request.data['amount'] * 100,  # Amount in cents
                         },
                         'quantity': 1,
                     }
-                ]
+                ],
+                # Add the custom ID in metadata
+                metadata={
+                    'payment_record_id': createdObject.id,  # Your custom database ID
+                }
             )
 
-
-
-            createdObject = PayPalPayment.objects.create(
-            amount = request.data['amount'],
-            created_by = request.user,
-            client = request.data.get('client', None),
-            response = checkout_session,
-            PayementId = checkout_session['id'],
-            type = 'stripe'
-            )
+            # Save the session ID to your database
+            createdObject.PayementId = checkout_session['id']
+            createdObject.response = checkout_session
+            createdObject.save()
 
             print(checkout_session)
-            return Response({'session': checkout_session, 'url':checkout_session['url'], 'id': createdObject.id})
+            return Response({'session': checkout_session, 'url': checkout_session['url'], 'id': createdObject.id})
         except Exception as e:
             return Response({'error': str(e)})
-    
-
 
 
     
