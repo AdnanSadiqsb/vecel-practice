@@ -729,7 +729,7 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
         )
         print("Updated rows:", rows)
 
-        return Response(data=f'Payment status updated: {payment_status}', status=201)
+        return Response(data=f'Payment status updated: {payment_status} rows {rows}', status=201)
    
     @action(detail=False, methods=['POST'], url_path='stripe-session', serializer_class= serializer.CreatePaypalLinkSerializer)
     def create_stripe_session(self, request):
