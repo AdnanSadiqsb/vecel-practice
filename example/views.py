@@ -744,13 +744,19 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
 
         domain_url = 'https://ibexbuildersworkhub.netlify.app/'
         stripe.api_key = settings.STRIPE_SECRET_KEY
-        try:
+        client = request.data.get('client', None)
+        clientQuery = None
 
+        # Fetch the User object based on client id, if provided
+        if client:
+            clientQuery = User.objects.get(id=client)
+
+        try:
             checkout_session = stripe.checkout.Session.create(
                 success_url=domain_url + 'payment-success?session_id={CHECKOUT_SESSION_ID}',
                 cancel_url=domain_url + 'payment-cancel/',
                 payment_method_types=['card', 'us_bank_account'],
-
+                customer_email=clientQuery.email if clientQuery else None,  # Set email if client exists
                 mode='payment',
                 line_items=[
                     {
@@ -759,25 +765,28 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
                             'product_data': {
                                 'name': 'T-shirt',
                             },
-                            'unit_amount': int(request.data['amount']) * 100,  # Amount in cents (2000 cents = 20 USD)
+                            'unit_amount': int(request.data['amount']) * 100,  # Amount in cents
                         },
                         'quantity': 1,
                     }
                 ]
             )
+
+            # Create PayPalPayment object, assigning clientQuery (the User instance)
             createdObject = PayPalPayment.objects.create(
-            amount = request.data['amount'],
-            created_by = request.user,
-            client = request.data.get('client', None),
-            response = checkout_session,
-            PayementId = checkout_session['id'],
-            type = 'Stripe'
+                amount=request.data['amount'],
+                created_by=request.user,
+                client=clientQuery,  # Pass the User instance here
+                response=checkout_session,
+                PayementId=checkout_session['id'],
+                type='Stripe'
             )
 
             print(checkout_session)
-            return Response({'session': checkout_session, 'url':checkout_session['url'], 'id': createdObject.id})
+            return Response({'session': checkout_session, 'url': checkout_session['url'], 'id': createdObject.id})
         except Exception as e:
             return Response({'error': str(e)})
+
     
 
 
