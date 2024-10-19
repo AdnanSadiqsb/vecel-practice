@@ -122,6 +122,7 @@ class Foo(models.Model):
 class PayPalPayment(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
     amount =  models.FloatField(default=0.0)
+    description = models.TextField(null=True, blank=True)
     response = models.JSONField(null=True, blank=True)
     PayementId  = models.CharField(max_length=300, null=True, blank=True)
     status  = models.CharField(null=True, blank=True, max_length=200, default='created')
@@ -129,3 +130,7 @@ class PayPalPayment(models.Model):
     client = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='client_pay', null =True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     type = models.CharField(max_length=200, default='PayPal')
+    checkoutLink  =models.CharField(max_length=600, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']

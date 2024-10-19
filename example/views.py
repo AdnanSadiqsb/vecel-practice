@@ -588,7 +588,9 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             client = request.data.get('client', None),
             response = resp,
             PayementId = resp['id'],
-            type  ='PayPal'
+            type  ='PayPal',
+            description = request.data['description'],
+            checkoutLink = resp['links'][1]['href']
             )
         if status:
             # handel_subscribtion_paypal(plan=plan,user_id=request.user,payment_id=payment_id)
@@ -763,7 +765,7 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
                         'price_data': {
                             'currency': 'usd',
                             'product_data': {
-                                'name': 'T-shirt',
+                                'name': request.data['description'],
                             },
                             'unit_amount': int(request.data['amount']) * 100,  # Amount in cents
                         },
@@ -779,7 +781,9 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
                 client=clientQuery,  # Pass the User instance here
                 response=checkout_session,
                 PayementId=checkout_session['id'],
-                type='Stripe'
+                type='Stripe',
+                description = request.data['description'],
+                checkoutLink = checkout_session['url']
             )
 
             print(checkout_session)
