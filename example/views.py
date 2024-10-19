@@ -587,7 +587,8 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             created_by = request.user,
             client = request.data.get('client', None),
             response = resp,
-            PayementId = resp['id']
+            PayementId = resp['id'],
+            type  ='PayPal'
             )
         if status:
             # handel_subscribtion_paypal(plan=plan,user_id=request.user,payment_id=payment_id)
@@ -768,7 +769,7 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             client = request.data.get('client', None),
             response = checkout_session,
             PayementId = checkout_session['id'],
-            type = 'stripe'
+            type = 'Stripe'
             )
 
             print(checkout_session)

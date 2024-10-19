@@ -128,4 +128,4 @@ class PayPalPayment(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='pay_created', null =True, blank=True)
     client = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='client_pay', null =True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    type = models.CharField(max_length=200, default='paypal')
+    type = models.CharField(max_length=200, default='PayPal')
