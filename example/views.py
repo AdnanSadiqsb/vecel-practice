@@ -714,6 +714,8 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             payment_status = 'processing'
         elif event['type'] == 'payment_intent.requires_action':
             payment_status = 'requires_action'
+        elif event['type'] == 'payment_intent.created':
+            payment_status = 'created'
         else:
             payment_status = 'unknown'  # For other unhandled event types
         print("event", event)
@@ -730,7 +732,7 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             checkout_session_id = checkout_session.id
             print("Checkout Session ID:", checkout_session_id)
         rows = PayPalPayment.objects.filter(PayementId=checkout_session_id).update(
-            response=event,  # You can serialize this to a JSONField
+            response=payment_intent,  # You can serialize this to a JSONField
             status=payment_status
         )
         print("Updated rows:", rows)
