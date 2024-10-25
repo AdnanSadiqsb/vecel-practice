@@ -121,8 +121,7 @@ class Foo(models.Model):
 
 class PayPalPayment(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
-    amount =  models.DecimalField(max_digits = 6, 
-                         decimal_places = 2)
+    amount =  models.FloatField(default=0.0)
     description = models.TextField(null=True, blank=True)
     response = models.JSONField(null=True, blank=True)
     PayementId  = models.CharField(max_length=300, null=True, blank=True)
