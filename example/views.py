@@ -754,11 +754,24 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             clientQuery = User.objects.get(id=client)
 
         try:
+            original_amount = float(request.data['amount'])
+
+            # Stripe fee calculations (example: 2.9% + $0.30)
+            stripe_fee_percentage = 0.029  # 2.9% for card payments
+            stripe_fixed_fee = 0.30  # $0.30 fixed fee
+
+            # Calculate total amount including fees
+            total_amount = original_amount + (original_amount * stripe_fee_percentage) + stripe_fixed_fee
+
+            # Convert to cents
+            unit_amount = int(total_amount * 100)
+
+            # Create the Stripe checkout session with the modified amount
             checkout_session = stripe.checkout.Session.create(
                 success_url=domain_url + 'payment-success?session_id={CHECKOUT_SESSION_ID}',
                 cancel_url=domain_url + 'payment-cancel/',
                 payment_method_types=['card', 'us_bank_account'],
-                customer_email=clientQuery.email if clientQuery else None,  # Set email if client exists
+                customer_email=clientQuery.email if clientQuery else None,
                 mode='payment',
                 line_items=[
                     {
@@ -767,7 +780,7 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
                             'product_data': {
                                 'name': request.data['description'],
                             },
-                            'unit_amount': int(request.data['amount']) * 100,  # Amount in cents
+                            'unit_amount': unit_amount,  # Amount in cents with fees included
                         },
                         'quantity': 1,
                     }
