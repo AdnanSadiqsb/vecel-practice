@@ -767,7 +767,7 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
                             'product_data': {
                                 'name': request.data['description'],
                             },
-                            'unit_amount': float(request.data['amount']) * 100,  # Amount in cents
+                            'unit_amount': int(request.data['amount']) * 100,  # Amount in cents
                         },
                         'quantity': 1,
                     }
