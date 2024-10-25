@@ -757,14 +757,16 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             original_amount = float(request.data['amount'])
 
             # Stripe fee calculations (example: 2.9% + $0.30)
-            stripe_fee_percentage = 0.029  # 2.9% for card payments
-            stripe_fixed_fee = 0.30  # $0.30 fixed fee
+            stripe_fee_percentage = 0.029  
+            stripe_fixed_fee = 0.30  
+            # $0.30 fixed fee
+            # 2.9% for card payments
 
             # Calculate total amount including fees
             total_amount = original_amount + (original_amount * stripe_fee_percentage) + stripe_fixed_fee
 
             # Convert to cents
-            unit_amount = int(total_amount * 100)
+            unit_amount = int(original_amount * 100)
 
             # Create the Stripe checkout session with the modified amount
             checkout_session = stripe.checkout.Session.create(
