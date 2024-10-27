@@ -131,6 +131,7 @@ class PayPalPayment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     type = models.CharField(max_length=200, default='PayPal')
     checkoutLink  =models.CharField(max_length=600, null=True, blank=True)
-
+    itemsList = models.JSONField(null=True, blank=True)
+    enableTax = models.BooleanField(default=False)
     class Meta:
         ordering = ['-created_at']

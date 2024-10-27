@@ -775,6 +775,8 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
                 payment_method_types=['card', 'us_bank_account'],
                 customer_email=clientQuery.email if clientQuery else None,
                 mode='payment',
+
+
                 line_items=[
                     {
                         'price_data': {
@@ -802,7 +804,90 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             )
 
             print(checkout_session)
-            return Response({'session': checkout_session, 'url': checkout_session['url'], 'id': createdObject.id})
+            return Response({'session': checkout_session, 'url': checkout_session['url']})
+        except Exception as e:
+            return Response({'error': str(e)})
+
+
+    @action(detail=False, methods=['POST'], url_path='stripe-session-new', serializer_class= serializer.CreatePaypalLinkNewSerializer)
+    def create_stripe_session_new(self, request):
+
+        domain_url = 'https://ibexbuildersworkhub.netlify.app/'
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        client = request.data.get('client', None)
+        itemsList = request.data.get('itemsList', [])
+        enableTax = request.data.get('enableTax', False)
+        clientQuery = None
+
+        if isinstance(itemsList, str):
+            try:
+                itemsList = json.loads(itemsList)  # Convert the string into JSON
+            except json.JSONDecodeError:
+                itemsList = [] 
+
+        # Fetch the User object based on client id, if provided
+        if client:
+            clientQuery = User.objects.get(id=client)
+
+        try:
+            # original_amount = float(request.data['amount'])
+
+            # Stripe fee calculations (example: 2.9% + $0.30)
+            stripe_fee_percentage = 0.029  
+            stripe_fixed_fee = 0.30  
+            # $0.30 fixed fee
+            # 2.9% for card payments
+
+            # Calculate total amount including fees
+            # total_amount = original_amount + (original_amount * stripe_fee_percentage) + stripe_fixed_fee
+
+            # Convert to cents
+            # unit_amount = int(original_amount * 100)
+            lineItems = []
+            total_amount = 0
+            for item in itemsList:
+                print("insode list", item)
+                total_amount += item['amount'] * item['quantity']
+                lineItems.append(
+                    {
+                        'price_data': {
+                            'currency': 'usd',
+                            'product_data': {
+                                'name': item['title'],
+                            },
+                            'unit_amount': int(item['amount'] * 100),  # Amount in cents with fees included
+                        },
+                        'quantity': item['quantity'],
+                    }
+                )
+
+            # Create the Stripe checkout session with the modified amount
+            checkout_session = stripe.checkout.Session.create(
+                success_url=domain_url + 'payment-success?session_id={CHECKOUT_SESSION_ID}',
+                cancel_url=domain_url + 'payment-cancel/',
+                payment_method_types=['card', 'us_bank_account'],
+                customer_email=clientQuery.email if clientQuery else None,
+                mode='payment',
+                automatic_tax={'enabled': enableTax},
+                line_items=lineItems
+            )
+
+            # Create PayPalPayment object, assigning clientQuery (the User instance)
+            createdObject = PayPalPayment.objects.create(
+                amount= total_amount,
+                created_by=request.user,
+                client=clientQuery,  # Pass the User instance here
+                response=checkout_session,
+                PayementId=checkout_session['id'],
+                type='Stripe',
+                description = request.data.get('description', None),
+                checkoutLink = checkout_session['url'],
+                itemsList = itemsList,
+                enableTax = enableTax
+            )
+
+            print(checkout_session)
+            return Response({'session': checkout_session, 'url': checkout_session['url']})
         except Exception as e:
             return Response({'error': str(e)})
 

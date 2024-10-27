@@ -450,6 +450,15 @@ class CreatePaypalLinkSerializer(serializers.Serializer):
     amount = serializers.FloatField()
     client =serializers.UUIDField(required = False)
     description = serializers.CharField()
+    
+
+
+
+class CreatePaypalLinkNewSerializer(serializers.Serializer):
+    client =serializers.UUIDField(required = False)
+    description = serializers.CharField()
+    enableTax = serializers.BooleanField(default=True)
+    itemsList = serializers.JSONField()
 
 
 class PayPalPaymentSerializer(serializers.ModelSerializer):
