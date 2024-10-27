@@ -1,4 +1,5 @@
 # Create your views here.
+import math
 from rest_framework import viewsets
 from django.db.models.functions import TruncMonth
 import json
@@ -784,7 +785,7 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
                             'product_data': {
                                 'name': request.data['description'],
                             },
-                            'unit_amount': unit_amount,  # Amount in cents with fees included
+                            'unit_amount': unit_amount,  
                         },
                         'quantity': 1,
                     }
@@ -817,6 +818,8 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
         client = request.data.get('client', None)
         itemsList = request.data.get('itemsList', [])
         enableTax = request.data.get('enableTax', False)
+        payment_method = request.data.get('payment_method', 'card')  # Default to card if not specified
+
         clientQuery = None
 
         if isinstance(itemsList, str):
@@ -830,19 +833,6 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             clientQuery = User.objects.get(id=client)
 
         try:
-            # original_amount = float(request.data['amount'])
-
-            # Stripe fee calculations (example: 2.9% + $0.30)
-            stripe_fee_percentage = 0.029  
-            stripe_fixed_fee = 0.30  
-            # $0.30 fixed fee
-            # 2.9% for card payments
-
-            # Calculate total amount including fees
-            # total_amount = original_amount + (original_amount * stripe_fee_percentage) + stripe_fixed_fee
-
-            # Convert to cents
-            # unit_amount = int(original_amount * 100)
             lineItems = []
             total_amount = 0
             for item in itemsList:
@@ -861,11 +851,38 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
                     }
                 )
 
+            fee = 0
+
+            if payment_method == 'card':
+                # Card fees: 2.9% + 30 cents
+                fee = (total_amount * 0.029) + 0.30
+            elif payment_method == 'us_bank_account':
+                # ACH fees: 0.8%, capped at $5
+                fee = min(total_amount * 0.008, 5)
+
+            # Convert fee to cents and round up
+            fee_in_cents = math.ceil(fee * 100)
+
+            # Add the fee as a separate line item
+            if fee_in_cents > 0:
+                lineItems.append(
+                    {
+                        'price_data': {
+                            'currency': 'usd',
+                            'product_data': {
+                                'name': f'{payment_method.capitalize()} Transaction Fee',
+                            },
+                            'unit_amount': fee_in_cents,
+                        },
+                        'quantity': 1,
+                    }
+                )
+
             # Create the Stripe checkout session with the modified amount
             checkout_session = stripe.checkout.Session.create(
                 success_url=domain_url + 'payment-success?session_id={CHECKOUT_SESSION_ID}',
                 cancel_url=domain_url + 'payment-cancel/',
-                payment_method_types=['card', 'us_bank_account'],
+                payment_method_types= [payment_method] if fee else  ['card','us_bank_account'],
                 customer_email=clientQuery.email if clientQuery else None,
                 mode='payment',
                 automatic_tax={'enabled': enableTax},

@@ -459,6 +459,7 @@ class CreatePaypalLinkNewSerializer(serializers.Serializer):
     description = serializers.CharField()
     enableTax = serializers.BooleanField(default=True)
     itemsList = serializers.JSONField()
+    payment_method = serializers.CharField(default='card')
 
 
 class PayPalPaymentSerializer(serializers.ModelSerializer):
