@@ -877,7 +877,7 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             #         },
             #         'quantity': 1,
             #     })
-
+            formatted_payment_method = payment_method.replace('_', ' ').title()
 
             if fee_in_cents > 0:
                 lineItems.append(
@@ -885,7 +885,7 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
                         'price_data': {
                             'currency': 'usd',
                             'product_data': {
-                                'name': f'{payment_method.capitalize()} Transaction Fee',
+                                'name': f'{formatted_payment_method} Transaction Fee',
                             },
                             'unit_amount': fee_in_cents,
                         },
@@ -904,7 +904,7 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
                 mode='payment',
                 automatic_tax={'enabled': enableTax},
                 line_items=lineItems,
-                payment_intent_data={"setup_future_usage": "off_session"},
+                payment_intent_data={"setup_future_usage": "off_session",  "description": request.data.get('description', None)},
                 
             )
 
