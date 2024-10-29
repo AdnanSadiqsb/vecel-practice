@@ -682,27 +682,27 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
         sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
         event = None
 
-        if sig_header:
-            # Verify the signature header exists
-            try:
-                event = stripe.Webhook.construct_event(
-                    payload, sig_header, endpoint_secret
-                )
-            except ValueError:
-                # Invalid payload
-                return Response(data='Invalid payload', status=400)
-            except Exception as e:
-                # Invalid signature
-                return Response(data=f'Signature verification failed {str(e)} ', status=400)
-        else:
-            # Skip signature verification for testing purposes
-            print("No signature header found, skipping signature verification.")
-            try:
-                event = stripe.Event.construct_from(
-                    json.loads(payload), stripe.api_key
-                )
-            except Exception:
-                return Response(data='Invalid payload', status=400)
+        # if sig_header:
+        #     # Verify the signature header exists
+        #     try:
+        #         event = stripe.Webhook.construct_event(
+        #             payload, sig_header, endpoint_secret
+        #         )
+        #     except ValueError:
+        #         # Invalid payload
+        #         return Response(data='Invalid payload', status=400)
+        #     except Exception as e:
+        #         # Invalid signature
+        #         return Response(data=f'Signature verification failed {str(e)} ', status=400)
+        # else:
+        #     # Skip signature verification for testing purposes
+        #     print("No signature header found, skipping signature verification.")
+        try:
+            event = stripe.Event.construct_from(
+                json.loads(payload), stripe.api_key
+            )
+        except Exception:
+            return Response(data='Invalid payload', status=400)
 
         # Process the event based on the type
         payment_status = None
