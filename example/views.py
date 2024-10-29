@@ -864,29 +864,33 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             fee_in_cents = math.ceil(fee * 100)
 
             # Add the fee as a separate line item
-            if fee_in_cents > 0:
-                lineItems.append(
-                    {
-                        'price_data': {
-                            'currency': 'usd',
-                            'product_data': {
-                                'name': f'{payment_method.capitalize()} Transaction Fee',
-                            },
-                            'unit_amount': fee_in_cents,
-                        },
-                        'quantity': 1,
-                    }
-                )
+
+
+            # if request.data.get('description'):
+            #     lineItems.insert(0, {
+            #         'price_data': {
+            #             'currency': 'usd',
+            #             'product_data': {
+            #                 'name': request.data['description'],  # This will be shown at the top
+            #             },
+            #             'unit_amount': 0,  # No charge for this item
+            #         },
+            #         'quantity': 1,
+            #     })
 
             # Create the Stripe checkout session with the modified amount
             checkout_session = stripe.checkout.Session.create(
+                customer_creation="always",
                 success_url=domain_url + 'payment-success?session_id={CHECKOUT_SESSION_ID}',
                 cancel_url=domain_url + 'payment-cancel/',
                 payment_method_types= [payment_method] if fee else  ['card','us_bank_account'],
+            
                 customer_email=clientQuery.email if clientQuery else None,
                 mode='payment',
                 automatic_tax={'enabled': enableTax},
-                line_items=lineItems
+                line_items=lineItems,
+                payment_intent_data={"setup_future_usage": "off_session"},
+                
             )
 
             # Create PayPalPayment object, assigning clientQuery (the User instance)
