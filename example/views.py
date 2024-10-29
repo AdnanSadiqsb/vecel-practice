@@ -691,9 +691,9 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             except ValueError:
                 # Invalid payload
                 return Response(data='Invalid payload', status=400)
-            except stripe.error.SignatureVerificationError:
+            except Exception as e:
                 # Invalid signature
-                return Response(data=f'Signature verification failed {stripe.stripe_response} ', status=400)
+                return Response(data=f'Signature verification failed {str(e)} ', status=400)
         else:
             # Skip signature verification for testing purposes
             print("No signature header found, skipping signature verification.")
@@ -877,6 +877,21 @@ class PaypalPaymentView(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.D
             #         },
             #         'quantity': 1,
             #     })
+
+
+            if fee_in_cents > 0:
+                lineItems.append(
+                    {
+                        'price_data': {
+                            'currency': 'usd',
+                            'product_data': {
+                                'name': f'{payment_method.capitalize()} Transaction Fee',
+                            },
+                            'unit_amount': fee_in_cents,
+                        },
+                        'quantity': 1,
+                    }
+                )
 
             # Create the Stripe checkout session with the modified amount
             checkout_session = stripe.checkout.Session.create(
