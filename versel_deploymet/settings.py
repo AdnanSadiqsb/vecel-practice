@@ -91,21 +91,15 @@ REST_FRAMEWORK = {
 # environments like Vercel. You can use a database over HTTP, hosted elsewhere.
 
 DATABASES = {
-    # "default": {
-    #     "ENGINE": "django.db.backends.sqlite3",
-    #     "NAME": BASE_DIR / "db.sqlite3",
-    # }
-
-#     POSTGRES_URL="postgres://default:nq4X8BGTDKCu@ep-restless-cloud-a4msixdi-pooler.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require"
-# POSTGRES_PRISMA_URL="postgres://default:nq4X8BGTDKCu@ep-restless-cloud-a4msixdi-pooler.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require&pgbouncer=true&connect_timeout=15"
-# POSTGRES_URL_NO_SSL="postgres://default:nq4X8BGTDKCu@ep-restless-cloud-a4msixdi-pooler.us-east-1.aws.neon.tech:5432/verceldb"
-# POSTGRES_URL_NON_POOLING="postgres://default:nq4X8BGTDKCu@ep-restless-cloud-a4msixdi.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require"
-# POSTGRES_USER="default"
-# POSTGRES_HOST="ep-restless-cloud-a4msixdi-pooler.us-east-1.aws.neon.tech"
-# POSTGRES_PASSWORD="nq4X8BGTDKCu"
-# POSTGRES_DATABASE="verceldb"
-
-    'default': {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'Ibex',
+#         'USER': 'ibexadmin',
+#         'PASSWORD': 'nq4X8BGTDKCu',
+#         'HOST': 'ibex.chkw8ye8mm2d.us-east-1.rds.amazonaws.com',
+#         'PORT': '5432',
+        
+#     }    'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'verceldb',
         'USER': 'default',
@@ -117,7 +111,6 @@ DATABASES = {
             'options': 'endpoint=ep-restless-cloud-a4msixdi-pooler'
         },
     }
-}
 
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {'api_key': {'type': 'apiKey', 'in': 'header', 'name': 'Authorization'}},

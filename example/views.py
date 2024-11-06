@@ -109,6 +109,16 @@ class AuthViewSet(viewsets.GenericViewSet):
     permission_classes = [AllowAny]
     serializer_class = serializer.EmptySerializer
 
+
+    @action(detail=False, methods=['GET'], url_path='validate-user', serializer_class=serializer.LoginSerializer)
+    def get_user_from_token(self, request):
+        user = request.user
+        if user.is_authenticated:
+            data = serializer.UserSerializer(user).data
+            return Response(data=data, status=status.HTTP_200_OK)
+        else:
+            return Response(data={'user': None}, status=status.HTTP_401_UNAUTHORIZED)
+
     @action(detail=False, methods=['POST', ],url_path='login',  serializer_class=serializer.LoginSerializer)
     def login(self, request):
         user = get_and_authenticate_user(email=request.data['email'], password=request.data['password'])
