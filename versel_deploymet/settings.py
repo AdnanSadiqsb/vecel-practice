@@ -99,7 +99,8 @@ DATABASES = {
 #         'HOST': 'ibex.chkw8ye8mm2d.us-east-1.rds.amazonaws.com',
 #         'PORT': '5432',
         
-#     }    'default': {
+#     }   
+ 'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'verceldb',
         'USER': 'default',
@@ -111,6 +112,7 @@ DATABASES = {
             'options': 'endpoint=ep-restless-cloud-a4msixdi-pooler'
         },
     }
+}
 
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {'api_key': {'type': 'apiKey', 'in': 'header', 'name': 'Authorization'}},

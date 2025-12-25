@@ -94,8 +94,8 @@ class Tasks(models.Model):
 
     fileName = models.CharField(null=True, blank=True, max_length=200)
 
-    note = models.CharField(null=True, blank=True)
-    priority = models.CharField(max_length=20, choices=TaskPeriority  , default=TaskPeriority.MEDIUM)
+    note = models.CharField (max_length=255, null=True, blank=True)
+    priority = models.CharField(max_length=200, choices=TaskPeriority.choices  , default=TaskPeriority.MEDIUM)
     def __str__(self):
         return self.title
     
