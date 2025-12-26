@@ -33,7 +33,7 @@ from drf_yasg.utils import swagger_auto_schema
 
 
 
-class UserViewSet(viewsets.GenericViewSet,  mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
+class UserViewSet(viewsets.GenericViewSet,  mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, mixins.CreateModelMixin):
     parser_classes = (FormParser, MultiPartParser)
     queryset = User.objects.all()
     serializer_class = serializer.UserSerializer
