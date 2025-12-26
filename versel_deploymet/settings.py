@@ -91,15 +91,7 @@ REST_FRAMEWORK = {
 # environments like Vercel. You can use a database over HTTP, hosted elsewhere.
 
 DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'Ibex',
-#         'USER': 'ibexadmin',
-#         'PASSWORD': 'nq4X8BGTDKCu',
-#         'HOST': 'ibex.chkw8ye8mm2d.us-east-1.rds.amazonaws.com',
-#         'PORT': '5432',
-        
-#     }   
+
  'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'verceldb',

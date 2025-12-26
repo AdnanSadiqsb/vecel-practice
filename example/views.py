@@ -37,13 +37,30 @@ class UserViewSet(viewsets.GenericViewSet,  mixins.RetrieveModelMixin, mixins.Up
     parser_classes = (FormParser, MultiPartParser)
     queryset = User.objects.all()
     serializer_class = serializer.UserSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     
-    # @action(detail=False, methods=['GET'], url_path='by-role/(?P<role>[^/]+)', serializer_class=serializer.UserSerializer)
-    # def get_users_by_role(self, request, role =None):
-    #     users = User.objects.filter(role=role)
-    #     data = self.get_serializer(users, many=True).data  
-    #     return Response(data=data, status=status.HTTP_200_OK)
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [IsAuthenticated()]
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return serializer.UserCreateSerializer
+        return serializer.UserSerializer
+    
+    @action(detail=False, methods=['POST'], url_path='signup-google', permission_classes=[AllowAny])
+    def signup_google(self, request):
+        # Placeholder for Google signup
+        # Implement OAuth flow here
+        return Response({'message': 'Google signup not implemented yet'}, status=501)
+    
+    @action(detail=False, methods=['POST'], url_path='signup-apple', permission_classes=[AllowAny])
+    def signup_apple(self, request):
+        # Placeholder for Apple signup
+        # Implement OAuth flow here
+        return Response({'message': 'Apple signup not implemented yet'}, status=501)
+    
     
   
 

@@ -44,6 +44,19 @@ class UserSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class UserCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['name', 'email', 'password']
+    
+    def create(self, validated_data):
+        validated_data['plain_password'] = validated_data.get('password')
+        validated_data['password'] = make_password(validated_data.get('password'))
+        validated_data['is_active'] = True
+        validated_data['username'] = validated_data.get('email')  # use email as username
+        return super().create(validated_data)
+
+
 class WorkersListSerializer(serializers.ModelSerializer):
     # Define additional fields for task counts
     active_tasks = serializers.IntegerField(read_only=True)

@@ -11,6 +11,7 @@ import uuid
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
+    name = models.CharField(max_length=100, null=True, blank=True)
     role = models.CharField(
         max_length=200, choices=UserRole.choices, default=UserRole.ADMIN
     )
@@ -25,9 +26,9 @@ class User(AbstractUser):
 
     supplier = models.ForeignKey('self', on_delete=models.CASCADE, related_name='worker_supplier', null=True, blank=True)
 
-    class Meta:
-        ordering = ['-date_joined']
-# Signal to delete avatar file when a User instance is deleted
+    google_id = models.CharField(max_length=255, null=True, blank=True)
+    apple_id = models.CharField(max_length=255, null=True, blank=True)
+
 @receiver(models.signals.post_delete, sender=User)
 def auto_delete_avatar(sender, instance, **kwargs):
     """
