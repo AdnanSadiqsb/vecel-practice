@@ -11,10 +11,28 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
 from pathlib import Path
-
+import environ
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+env = environ.Env()
 
+# Ensure the path is correct and read the specified .env file
+env_file = BASE_DIR / '.env'
+env.read_env(env_file)
+
+
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+# SECURITY WARNING: keep the secret key used in production secret!
+
+# SECURITY WARNING: don't run with debug turned on in production!
+
+env = environ.Env(
+    DEBUG=(bool, False),
+    
+    PRODUCTION=(bool, True),
+)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -194,3 +212,8 @@ STRIPE_SECRET_KEY = 'sk_live_51QAFpuLeA2SpMHb3EWy3HvkWbtlFKY1BV7oqHeZxcQRMpRfrd6
 
 
 STRIPE_ENDPOINT_SECRET = 'we_1QD8xqLeA2SpMHb3JrGS9heT'
+
+
+GOOGLE_OAUTH_CLIENT_ID=env("GOOGLE_OAUTH_CLIENT_ID")
+GOOGLE_OAUTH_CLIENT_SECRET=env("GOOGLE_OAUTH_CLIENT_SECRET")
+GOOGLE_OAUTH_CALLBACK_URL="https://vecel-practice-4cri.vercel.app/api/v1/auth/google/callback/"

@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 import datetime
-from .choices import UserRole, ProjectStatus, TaskPeriority
+from .choices import Config_types, UserRole, ProjectStatus, TaskPeriority
 from django.dispatch import receiver
 from django.utils import timezone
 import randomcolor
@@ -38,9 +38,28 @@ def auto_delete_avatar(sender, instance, **kwargs):
         if instance.avatar.storage.exists(instance.avatar.name):
             instance.avatar.storage.delete(instance.avatar.name)
 
+class basedModel(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        abstract = True
 
+class typeOfConfig(basedModel):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    name = models.CharField(max_length=200)
+    type = models.CharField(max_length=200, choices=Config_types.choices, default=Config_types.BREED)
 
+class Pet(basedModel):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    name = models.CharField(max_length=200)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pets')
+    age = models.IntegerField(default=0)
+    breed = models.ForeignKey(typeOfConfig, on_delete=models.SET_NULL, related_name='pet_breed', null=True, blank=True)
+    weight = models.FloatField(default=0.0)
+    notes = models.TextField(null=True, blank=True)
+    
 
 
 class PayPalPayment(models.Model):

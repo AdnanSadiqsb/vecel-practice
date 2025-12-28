@@ -21,3 +21,7 @@ class TaskPeriority(models.TextChoices):
     LOW = "Low"
     MEDIUM = "Medium"
     HIGH = "High"
+
+class Config_types(models.TextChoices):
+    BREED = "breed"
+    PET_TYPE = "pet_type"

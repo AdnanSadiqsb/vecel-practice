@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import PayPalPayment, User
+from .models import PayPalPayment, User,typeOfConfig , Pet
 from datetime import date
 from .choices import ProjectStatus
 from django.contrib.auth.hashers import make_password
@@ -35,7 +35,6 @@ class UserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         # Encrypt the password if it's present in validated_data
         password = validated_data.pop('password', None)
-        print("password", password)
         if password and len(password)<=12:
             validated_data['plain_password'] = password
             validated_data['password'] = make_password(password)
@@ -57,39 +56,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class WorkersListSerializer(serializers.ModelSerializer):
-    # Define additional fields for task counts
-    active_tasks = serializers.IntegerField(read_only=True)
-    completed_tasks = serializers.IntegerField(read_only=True)
-    cancelled_tasks = serializers.IntegerField(read_only=True)
-    pending_tasks = serializers.IntegerField(read_only=True)
 
-    class Meta:
-        model = User
-        exclude = ["groups", "user_permissions", "is_superuser", "is_staff", 'plain_password']
-
-class ContractorssListSerializer(serializers.ModelSerializer):
-    # Define additional fields for task counts
-    active_project = serializers.IntegerField(read_only=True)
-    completed_project = serializers.IntegerField(read_only=True)
-    cancelled_project = serializers.IntegerField(read_only=True)
-    pending_project = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = User
-        exclude = ["groups", "user_permissions", "is_superuser", "is_staff", 'plain_password']
-
-
-
-class SupplierListSerializer(serializers.ModelSerializer):
-    # Define additional fields for task counts
-    total_workers = serializers.SerializerMethodField(read_only=True)
-    class Meta:
-        model = User
-        exclude = ["groups", "user_permissions", "is_superuser", "is_staff", 'plain_password', 'password', 'supplier']
-    
-    def get_total_workers(self, obj):
-        return User.objects.filter(supplier=obj).count()
 
 class UserShortInfoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -100,16 +67,15 @@ class UserShortInfoSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
+
+class LoginWithGoogleSerializer(serializers.Serializer):
+    id_token = serializers.CharField()
 class EmptySerializer(serializers.Serializer):
     pass
 
 
 
-colors = [
-    '#2c3e50',
-    '#58cd32',
-    '#7c8dad'
-]
+
 
 
     
@@ -120,6 +86,26 @@ class SendMailToWorkersSerializer(serializers.Serializer):
     worker = serializers.CharField(max_length = 3, default='all')
 
 
+
+class TypeOfConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = typeOfConfig
+        fields = '__all__'
+
+class PetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pet
+        fields = '__all__'
+
+    
+
+class PetListSerializer(serializers.ModelSerializer):
+    owner_info = UserShortInfoSerializer(source = 'owner', read_only=True)
+    breed_info = TypeOfConfigSerializer(source = 'breed', read_only=True)
+
+    class Meta:
+        model = Pet
+        fields = '__all__'
 
 class addTasksXLSSErialixer(serializers.Serializer):
     file = serializers.FileField()

@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 import stripe
 from example.services.paypal_service import make_paypal_payment, get_paypal_payment_by_id, get_all_paypal_payments, execute_paypal_payment
-from .models import PayPalPayment, User
+from .models import PayPalPayment, User, typeOfConfig, Pet
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -28,13 +28,20 @@ from datetime import timedelta
 from django.shortcuts import get_object_or_404
 import randomcolor
 import numpy as np  # Add this import statement
+from rest_framework.renderers import JSONRenderer
 
 from drf_yasg.utils import swagger_auto_schema
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 
+from urllib.parse import urljoin
 
+import requests
 
-class UserViewSet(viewsets.GenericViewSet,  mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, mixins.CreateModelMixin):
-    parser_classes = (FormParser, MultiPartParser)
+from django.urls import reverse
+
+class UserViewSet(viewsets.GenericViewSet,  mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
+    # parser_classes = (FormParser, MultiPartParser)
     queryset = User.objects.all()
     serializer_class = serializer.UserSerializer
     # permission_classes = [IsAuthenticated]
@@ -45,15 +52,85 @@ class UserViewSet(viewsets.GenericViewSet,  mixins.RetrieveModelMixin, mixins.Up
         return [IsAuthenticated()]
     
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action == 'manual_signup':
             return serializer.UserCreateSerializer
+        if self.action == 'signup_google':
+            return serializer.LoginWithGoogleSerializer
+        
+
         return serializer.UserSerializer
     
-    @action(detail=False, methods=['POST'], url_path='signup-google', permission_classes=[AllowAny])
+   
+    
+    @action(detail=False, methods=['POST'], url_path='signup-google', permission_classes=[AllowAny], serializer_class=serializer.LoginWithGoogleSerializer)
     def signup_google(self, request):
-        # Placeholder for Google signup
-        # Implement OAuth flow here
-        return Response({'message': 'Google signup not implemented yet'}, status=501)
+        """
+        Handle Google OAuth signup/login
+        Expects 'id_token' in request data from frontend
+        """
+        id_token_value = request.data.get('id_token')
+        
+        if not id_token_value:
+            return Response({'error': 'ID token is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Verify the token with Google
+            id_info = id_token.verify_oauth2_token(
+                id_token_value, 
+                google_requests.Request(), 
+                settings.GOOGLE_OAUTH_CLIENT_ID
+            )
+            
+            # Extract user information
+            google_id = id_info['sub']
+            email = id_info['email']
+            name = id_info.get('name', '')
+            given_name = id_info.get('given_name', '')
+            family_name = id_info.get('family_name', '')
+            
+            # Check if user already exists
+            user = User.objects.filter(Q(email=email) | Q(google_id=google_id)).first()
+            
+            if user:
+                # User exists, update Google ID if not set
+                if not user.google_id:
+                    user.google_id = google_id
+                    user.save()
+            else:
+                # Create new user
+                # Generate a unique username
+                base_username = email.split('@')[0]
+                username = base_username
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base_username}_{counter}"
+                    counter += 1
+                
+                user = User.objects.create(
+                    username=username,
+                    email=email,
+                    name=name,
+                    google_id=google_id,
+                    is_active=True
+                )
+            
+            # Create or get authentication token
+            token, created = Token.objects.get_or_create(user=user)
+            
+            # Return user data and token
+            user_data = serializer.UserSerializer(user).data
+            return Response({
+                'user': user_data,
+                'token': token.key,
+                'message': 'Successfully authenticated with Google'
+            }, status=status.HTTP_200_OK)
+            
+        except ValueError as e:
+            # Invalid token
+            return Response({'error': 'Invalid Google token'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # Other errors
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=False, methods=['POST'], url_path='signup-apple', permission_classes=[AllowAny])
     def signup_apple(self, request):
@@ -61,9 +138,138 @@ class UserViewSet(viewsets.GenericViewSet,  mixins.RetrieveModelMixin, mixins.Up
         # Implement OAuth flow here
         return Response({'message': 'Apple signup not implemented yet'}, status=501)
     
+    @action(detail=False, methods=['POST'], url_path='signup-manual', permission_classes=[AllowAny], serializer_class=serializer.UserCreateSerializer)
+    def manual_signup(self, request):
+        self_serializer = self.get_serializer(data=request.data)
+        self_serializer.is_valid(raise_exception=True)
+        user = self_serializer.save()
+        token, created = Token.objects.get_or_create(user=user)
+        user_info = serializer.UserSerializer(user)
+        return Response({
+            'user': user_info,
+            'token': token.key,
+            'message': 'Successfully created new user'
+        }, status=status.HTTP_200_OK)
+        # Placeholder for Apple signup
+        # Implement OAuth flow here
     
-  
 
+
+
+class GoogleLoginCallback(APIView):
+    renderer_classes = [JSONRenderer]  # 🔥 THIS FIXES THE ERROR
+
+    def get(self, request, *args, **kwargs):
+        code = request.GET.get("code")
+
+        if not code:
+            return Response(
+                {"error": "Authorization code not provided"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 🔹 STEP 1: Exchange code for tokens
+        token_url = "https://oauth2.googleapis.com/token"
+        token_data = {
+            "code": code,
+            "client_id": settings.GOOGLE_OAUTH_CLIENT_ID,
+            "client_secret": settings.GOOGLE_OAUTH_CLIENT_SECRET,
+            "redirect_uri": settings.GOOGLE_OAUTH_CALLBACK_URL,
+            "grant_type": "authorization_code",
+        }
+
+        token_response = requests.post(token_url, data=token_data)
+        token_response_data = token_response.json()
+
+        if "id_token" not in token_response_data:
+            return Response(
+                {"error": "Failed to obtain ID token from Google"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        id_token_value = token_response_data["id_token"]
+
+        # 🔹 STEP 2: Verify ID token
+        try:
+            id_info = id_token.verify_oauth2_token(
+                id_token_value,
+                google_requests.Request(),
+                settings.GOOGLE_OAUTH_CLIENT_ID
+            )
+        except ValueError:
+            return Response(
+                {"error": "Invalid Google token"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 🔹 STEP 3: Extract user info
+        google_id = id_info["sub"]
+        email = id_info.get("email")
+        name = id_info.get("name", "")
+
+        # 🔹 STEP 4: Create / Get user
+        user = User.objects.filter(
+            Q(email=email) | Q(google_id=google_id)
+        ).first()
+
+        if user:
+            if not user.google_id:
+                user.google_id = google_id
+                user.save()
+        else:
+            base_username = email.split("@")[0]
+            username = base_username
+            counter = 1
+
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}_{counter}"
+                counter += 1
+
+            user = User.objects.create(
+                username=username,
+                email=email,
+                name=name,
+                google_id=google_id,
+                is_active=True
+            )
+
+        # 🔹 STEP 5: DRF Token
+        token, _ = Token.objects.get_or_create(user=user)
+
+        return Response(
+            {
+                "token": token.key,
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.name,
+                },
+                "message": "Google login successful",
+            },
+            status=status.HTTP_200_OK
+        )
+
+class TypeOfConfigViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.DestroyModelMixin):
+    queryset = typeOfConfig.objects.all()
+    serializer_class = serializer.TypeOfConfigSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['GET'], url_path='config-by-type/(?P<config_type>[^/.]+)', serializer_class=serializer.TypeOfConfigSerializer)
+    def get_config_by_type(self, request, config_type):
+        configs = typeOfConfig.objects.filter(type=config_type)
+        data = self.get_serializer(configs, many=True).data
+        return Response(data=data, status=status.HTTP_200_OK)
+    
+class PetViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
+    queryset = Pet.objects.all()
+    serializer_class = serializer.PetSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['get'], url_path='by-owner', serializer_class=serializer.PetListSerializer)
+    def get_pets_by_owner(self, request):
+        pets = Pet.objects.filter(owner=request.user).select_related('owner', 'breed')
+        data = self.get_serializer(pets, many=True).data
+        return Response(data=data, status=status.HTTP_200_OK)
     
 
 def get_and_authenticate_user(email, password):
