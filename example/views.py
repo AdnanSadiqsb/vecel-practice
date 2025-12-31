@@ -49,6 +49,8 @@ class UserViewSet(viewsets.GenericViewSet,  mixins.RetrieveModelMixin, mixins.Up
     def get_permissions(self):
         if self.action == 'create':
             return [AllowAny()]
+        if self.action == "signup_google":
+            return [AllowAny()]
         return [IsAuthenticated()]
     
     def get_serializer_class(self):
@@ -60,9 +62,9 @@ class UserViewSet(viewsets.GenericViewSet,  mixins.RetrieveModelMixin, mixins.Up
 
         return serializer.UserSerializer
     
-   
-    
-    @action(detail=False, methods=['POST'], url_path='signup-google', permission_classes=[AllowAny], serializer_class=serializer.LoginWithGoogleSerializer)
+
+
+    @action(detail=False, methods=['POST'], url_path='signup-google', permission_classes=[AllowAny], authentication_classes=[], serializer_class=serializer.LoginWithGoogleSerializer)
     def signup_google(self, request):
         """
         Handle Google OAuth signup/login
@@ -78,7 +80,7 @@ class UserViewSet(viewsets.GenericViewSet,  mixins.RetrieveModelMixin, mixins.Up
             id_info = id_token.verify_oauth2_token(
                 id_token_value, 
                 google_requests.Request(), 
-                settings.GOOGLE_OAUTH_CLIENT_ID
+                settings.GOOGLE_MOBILE_CLIENT_ID
             )
             
             # Extract user information
@@ -248,6 +250,61 @@ class GoogleLoginCallback(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+
+class GoogleMobileLogin(APIView):
+    permission_classes = []
+    serializer_class = serializer.LoginWithGoogleSerializer
+
+    def post(self, request):
+        id_token_value = request.data.get("id_token")
+
+        if not id_token_value:
+            return Response(
+                {"error": "ID token not provided"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            id_info = id_token.verify_oauth2_token(
+                id_token_value,
+                google_requests.Request(),
+                settings.GOOGLE_MOBILE_CLIENT_ID
+            )
+        except ValueError:
+            return Response(
+                {"error": "Invalid Google token"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        email = id_info.get("email")
+        google_id = id_info.get("sub")
+        name = id_info.get("name", "")
+
+        user = User.objects.filter(
+            Q(email=email) | Q(google_id=google_id)
+        ).first()
+
+        if not user:
+            user = User.objects.create(
+                username=email.split("@")[0],
+                email=email,
+                name=name,
+                google_id=google_id,
+                is_active=True
+            )
+
+        token, _ = Token.objects.get_or_create(user=user)
+
+        return Response({
+            "token": token.key,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+            },
+            "message": "Google login successful"
+        })
 
 class TypeOfConfigViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.DestroyModelMixin):
     queryset = typeOfConfig.objects.all()

@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework import routers
 
-from .views import UserViewSet, AuthViewSet, PaypalPaymentView, PaypalValidatePaymentView, GoogleLoginCallback, PetViewSet, TypeOfConfigViewSet
+from .views import GoogleMobileLogin, UserViewSet, AuthViewSet, PaypalPaymentView, PaypalValidatePaymentView, GoogleLoginCallback, PetViewSet, TypeOfConfigViewSet
 
 router = routers.DefaultRouter()
 router.register(r"user", UserViewSet)
@@ -21,5 +21,6 @@ urlpatterns = [
         GoogleLoginCallback.as_view(),
         name="google_login_callback",
     ),
+    # path("v1/auth/google-mobile-login/", GoogleMobileLogin.as_view(), name="google_login"),
 
 ]
