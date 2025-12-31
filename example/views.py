@@ -310,6 +310,7 @@ class TypeOfConfigViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixi
     queryset = typeOfConfig.objects.all()
     serializer_class = serializer.TypeOfConfigSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = (FormParser, MultiPartParser)
 
     @action(detail=False, methods=['GET'], url_path='config-by-type/(?P<config_type>[^/.]+)', serializer_class=serializer.TypeOfConfigSerializer)
     def get_config_by_type(self, request, config_type):

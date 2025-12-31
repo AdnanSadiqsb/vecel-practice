@@ -39,7 +39,7 @@ def auto_delete_avatar(sender, instance, **kwargs):
             instance.avatar.storage.delete(instance.avatar.name)
 
 class basedModel(models.Model):
-    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -47,12 +47,13 @@ class basedModel(models.Model):
         abstract = True
 
 class typeOfConfig(basedModel):
-    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
     name = models.CharField(max_length=200)
     type = models.CharField(max_length=200, choices=Config_types.choices, default=Config_types.BREED)
+    image = models.FileField(upload_to="static/type_of_config_images", blank=True, null=True)
 
 class Pet(basedModel):
-    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
     name = models.CharField(max_length=200)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pets')
     age = models.IntegerField(default=0)
@@ -63,7 +64,7 @@ class Pet(basedModel):
 
 
 class PayPalPayment(models.Model):
-    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
     amount =  models.FloatField(default=0.0)
     description = models.TextField(null=True, blank=True)
     response = models.JSONField(null=True, blank=True)

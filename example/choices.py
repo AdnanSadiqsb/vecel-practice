@@ -25,3 +25,6 @@ class TaskPeriority(models.TextChoices):
 class Config_types(models.TextChoices):
     BREED = "breed"
     PET_TYPE = "pet_type"
+    ANIMAL_TYPES = "animal_types"
+    ANIMAL_GENDER = "animal_gender"
+    NEUTERING_STATUS = "neutering_status"
