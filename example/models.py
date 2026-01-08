@@ -60,8 +60,20 @@ class Pet(basedModel):
     breed = models.ForeignKey(typeOfConfig, on_delete=models.SET_NULL, related_name='pet_breed', null=True, blank=True)
     weight = models.FloatField(default=0.0)
     notes = models.TextField(null=True, blank=True)
+    gender = models.CharField(max_length=200, null=True, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    health_status = models.CharField(max_length=200, null=True, blank=True)
+    pet_type = models.ForeignKey(typeOfConfig, on_delete=models.SET_NULL, related_name='pet_type', null=True, blank=True)
     
 
+class PetImage(basedModel):
+    pet = models.ForeignKey(
+        Pet,
+        on_delete=models.CASCADE,
+        related_name="images"
+    )
+    image = models.FileField(upload_to="pets/images/")
+    
 
 class PayPalPayment(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)

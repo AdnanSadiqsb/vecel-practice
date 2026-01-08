@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 import stripe
 from example.services.paypal_service import make_paypal_payment, get_paypal_payment_by_id, get_all_paypal_payments, execute_paypal_payment
-from .models import PayPalPayment, User, typeOfConfig, Pet
+from .models import PayPalPayment, User, typeOfConfig, Pet, PetImage
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -29,7 +29,8 @@ from django.shortcuts import get_object_or_404
 import randomcolor
 import numpy as np  # Add this import statement
 from rest_framework.renderers import JSONRenderer
-
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
@@ -64,75 +65,76 @@ class UserViewSet(viewsets.GenericViewSet,  mixins.RetrieveModelMixin, mixins.Up
     
 
 
-    @action(detail=False, methods=['POST'], url_path='signup-google', permission_classes=[AllowAny], authentication_classes=[], serializer_class=serializer.LoginWithGoogleSerializer)
+    @action(
+    detail=False,
+    methods=['POST'],
+    url_path='signup-google',
+    permission_classes=[AllowAny],
+    authentication_classes=[]
+    )
     def signup_google(self, request):
-        """
-        Handle Google OAuth signup/login
-        Expects 'id_token' in request data from frontend
-        """
         id_token_value = request.data.get('id_token')
-        
+
         if not id_token_value:
-            return Response({'error': 'ID token is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {'error': 'ID token is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
-            # Verify the token with Google
             id_info = id_token.verify_oauth2_token(
-                id_token_value, 
-                google_requests.Request(), 
+                id_token_value,
+                google_requests.Request(),
                 settings.GOOGLE_MOBILE_CLIENT_ID
             )
-            
-            # Extract user information
-            google_id = id_info['sub']
-            email = id_info['email']
-            name = id_info.get('name', '')
-            given_name = id_info.get('given_name', '')
-            family_name = id_info.get('family_name', '')
-            
-            # Check if user already exists
-            user = User.objects.filter(Q(email=email) | Q(google_id=google_id)).first()
-            
-            if user:
-                # User exists, update Google ID if not set
-                if not user.google_id:
-                    user.google_id = google_id
-                    user.save()
-            else:
-                # Create new user
-                # Generate a unique username
-                base_username = email.split('@')[0]
-                username = base_username
-                counter = 1
-                while User.objects.filter(username=username).exists():
-                    username = f"{base_username}_{counter}"
-                    counter += 1
-                
-                user = User.objects.create(
-                    username=username,
-                    email=email,
-                    name=name,
-                    google_id=google_id,
-                    is_active=True
-                )
-            
-            # Create or get authentication token
-            token, created = Token.objects.get_or_create(user=user)
-            
-            # Return user data and token
-            user_data = serializer.UserSerializer(user).data
-            return Response({
-                'user': user_data,
-                'token': token.key,
-                'message': 'Successfully authenticated with Google'
-            }, status=status.HTTP_200_OK)
-            
         except ValueError as e:
-            # Invalid token
-            return Response({'error': 'Invalid Google token'}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            # Other errors
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {'error': 'Invalid Google token', 'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        google_id = id_info['sub']
+        email = id_info.get('email')
+        name = id_info.get('name', '')
+
+        user = User.objects.filter(
+            Q(email=email) | Q(google_id=google_id)
+        ).first()
+
+        if not user:
+            base_username = email.split('@')[0]
+            username = base_username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}_{counter}"
+                counter += 1
+
+            user = User.objects.create(
+                username=username,
+                email=email,
+                name=name,
+                google_id=google_id,
+                is_active=True
+            )
+        else:
+            if not user.google_id:
+                user.google_id = google_id
+                user.save()
+
+        token, _ = Token.objects.get_or_create(user=user)
+
+        return Response({
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'name': user.name,
+            },
+            'token': token.key,
+            'message': 'Successfully authenticated with Google'
+        }, status=status.HTTP_200_OK)
+                
+     
+      
     
     @action(detail=False, methods=['POST'], url_path='signup-apple', permission_classes=[AllowAny])
     def signup_apple(self, request):
@@ -322,6 +324,42 @@ class PetViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.Retrie
     queryset = Pet.objects.all()
     serializer_class = serializer.PetSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+
+    @swagger_auto_schema(
+        operation_description="Create pet with multiple images",
+        request_body=serializer.PetSwaggerSerializer,
+        manual_parameters=[
+            openapi.Parameter(
+                name="uploaded_images",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_FILE,
+                description="Upload pet images (multiple allowed)",
+                required=False,
+            ),
+        ],
+        consumes=["multipart/form-data"],
+        responses={201: serializer.PetSwaggerSerializer},
+    )
+    def create(self, request, *args, **kwargs):
+        serializer_loc = self.get_serializer(data=request.data)
+        serializer_loc.is_valid(raise_exception=True)
+        pet = serializer_loc.save(owner=request.user)
+
+        images = request.FILES.getlist("uploaded_images")
+        PetImage.objects.bulk_create([
+            PetImage(pet=pet, image=image)
+            for image in images
+        ])
+
+        return Response(
+            serializer.PetSerializer(pet).data,
+            status=status.HTTP_201_CREATED
+        )
+
+
+
 
     @action(detail=False, methods=['get'], url_path='by-owner', serializer_class=serializer.PetListSerializer)
     def get_pets_by_owner(self, request):

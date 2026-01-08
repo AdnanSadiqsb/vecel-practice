@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import PayPalPayment, User,typeOfConfig , Pet
+from .models import PayPalPayment, PetImage, User,typeOfConfig , Pet
 from datetime import date
 from .choices import ProjectStatus
 from django.contrib.auth.hashers import make_password
@@ -92,17 +92,61 @@ class TypeOfConfigSerializer(serializers.ModelSerializer):
         model = typeOfConfig
         fields = '__all__'
 
-class PetSerializer(serializers.ModelSerializer):
+class PetImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PetImage
+        fields = ["id", "image"]
+
+
+class PetSwaggerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pet
-        fields = '__all__'
+        exclude = ("id",)  # or fields you want
+
+
+class PetSerializer(serializers.ModelSerializer):
+    
+
+
+    # uploaded_images = serializers.ListField(
+    #     child=serializers.ImageField(),
+    #     write_only=True,      # ✅ IMPORTANT
+    #     required=False
+    # )
+
+
+    class Meta:
+        model = Pet
+        fields = "__all__"
+
+    def create(self, validated_data):
+        images = validated_data.pop("uploaded_images", [])
+        pet = super().create(validated_data)
+
+        PetImage.objects.bulk_create([
+            PetImage(pet=pet, image=image)
+            for image in images
+        ])
+
+        return pet
+
+    def update(self, instance, validated_data):
+        images = validated_data.pop("uploaded_images", [])
+        pet = super().update(instance, validated_data)
+
+        for image in images:
+            PetImage.objects.create(pet=pet, image=image)
+
+        return pet
+
+
 
     
 
 class PetListSerializer(serializers.ModelSerializer):
     owner_info = UserShortInfoSerializer(source = 'owner', read_only=True)
     breed_info = TypeOfConfigSerializer(source = 'breed', read_only=True)
-
+    images = PetImageSerializer(many=True, read_only=True)
     class Meta:
         model = Pet
         fields = '__all__'
