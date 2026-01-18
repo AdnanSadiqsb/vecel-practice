@@ -51,6 +51,7 @@ class typeOfConfig(basedModel):
     name = models.CharField(max_length=200)
     type = models.CharField(max_length=200, choices=Config_types.choices, default=Config_types.BREED)
     image = models.FileField(upload_to="static/type_of_config_images", blank=True, null=True)
+    parent_type = models.ForeignKey('self', on_delete=models.CASCADE, related_name='sub_types', null=True, blank=True)
 
 class Pet(basedModel):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)

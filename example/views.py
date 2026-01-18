@@ -29,7 +29,6 @@ from django.shortcuts import get_object_or_404
 import randomcolor
 import numpy as np  # Add this import statement
 from rest_framework.renderers import JSONRenderer
-from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from google.auth.transport import requests as google_requests
@@ -314,9 +313,27 @@ class TypeOfConfigViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixi
     permission_classes = [IsAuthenticated]
     parser_classes = (FormParser, MultiPartParser)
 
+
+    @swagger_auto_schema(
+    
+        manual_parameters=[
+            openapi.Parameter(
+                name="parent_type",
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description="Parent type ID to filter by",
+                required=False,
+            ),
+        ],
+        consumes=["multipart/form-data"],
+        responses={201: serializer.PetSwaggerSerializer},
+    )
     @action(detail=False, methods=['GET'], url_path='config-by-type/(?P<config_type>[^/.]+)', serializer_class=serializer.TypeOfConfigSerializer)
     def get_config_by_type(self, request, config_type):
+        parent_type = request.query_params.get('parent_type', None)
         configs = typeOfConfig.objects.filter(type=config_type)
+        if parent_type:
+            configs = configs.filter(parent_type__id=parent_type)
         data = self.get_serializer(configs, many=True).data
         return Response(data=data, status=status.HTTP_200_OK)
     
