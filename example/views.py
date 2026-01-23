@@ -376,7 +376,11 @@ class PetViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.Retrie
         )
 
 
-
+    @action(detail=True, methods=['get'], url_path='detail', serializer_class=serializer.PetDetailSerializer)
+    def get_pet_detail(self, request, pk):
+        pet = get_object_or_404(Pet, pk=pk)
+        data = self.get_serializer(pet).data
+        return Response(data=data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='by-owner', serializer_class=serializer.PetListSerializer)
     def get_pets_by_owner(self, request):
@@ -390,6 +394,13 @@ def get_and_authenticate_user(email, password):
     if user is None:
         raise serializers.ValidationError("Invalid username/password. Please try again!")
     return user
+
+
+class PetImagesViewSet(viewsets.GenericViewSet, mixins.DestroyModelMixin,  mixins.CreateModelMixin):
+    queryset = PetImage.objects.all()
+    parser_classes = [MultiPartParser, FormParser]
+    serializer_class = serializer.PetImageSerializer
+    permission_classes = [IsAuthenticated]
 
 class AuthViewSet(viewsets.GenericViewSet):
     queryset = User.objects.all()

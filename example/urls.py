@@ -1,13 +1,14 @@
 from django.urls import include, path
 from rest_framework import routers
 
-from .views import GoogleMobileLogin, UserViewSet, AuthViewSet, PaypalPaymentView, PaypalValidatePaymentView, GoogleLoginCallback, PetViewSet, TypeOfConfigViewSet
+from .views import GoogleMobileLogin, PetImagesViewSet, UserViewSet, AuthViewSet, PaypalPaymentView, PaypalValidatePaymentView, GoogleLoginCallback, PetViewSet, TypeOfConfigViewSet
 
 router = routers.DefaultRouter()
 router.register(r"user", UserViewSet)
 router.register(r"auth", AuthViewSet, basename="user_auth")
 router.register(r"type_of_config", TypeOfConfigViewSet)
 router.register(r"pet", PetViewSet)
+router.register(r"pet_image", PetImagesViewSet)
 # router.register(r"project", ProjectViewSet)
 # router.register(r"task", TaskViewSet)
 # router.register(r"paypal", PaypalPaymentView, basename="paypal_payment")

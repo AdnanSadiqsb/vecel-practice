@@ -95,7 +95,7 @@ class TypeOfConfigSerializer(serializers.ModelSerializer):
 class PetImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = PetImage
-        fields = ["id", "image"]
+        fields = ["id", "image", "pet"]
 
 
 class PetSwaggerSerializer(serializers.ModelSerializer):
@@ -144,12 +144,20 @@ class PetSerializer(serializers.ModelSerializer):
     
 
 class PetListSerializer(serializers.ModelSerializer):
-    owner_info = UserShortInfoSerializer(source = 'owner', read_only=True)
     breed_info = TypeOfConfigSerializer(source = 'breed', read_only=True)
     images = PetImageSerializer(many=True, read_only=True)
     class Meta:
         model = Pet
         fields = '__all__'
+
+class PetDetailSerializer(serializers.ModelSerializer):
+    breed_info = TypeOfConfigSerializer(source = 'breed', read_only=True)
+    pet_type_info = TypeOfConfigSerializer(source = 'pet_type', read_only=True)
+    images = PetImageSerializer(many=True, read_only=True)
+    class Meta:
+        model = Pet
+        fields = '__all__'
+
 
 class addTasksXLSSErialixer(serializers.Serializer):
     file = serializers.FileField()
