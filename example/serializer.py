@@ -42,6 +42,14 @@ class UserSerializer(serializers.ModelSerializer):
 
         return super().update(instance, validated_data)
 
+class LoginResponseUserSerializer(serializers.ModelSerializer):
+    linked_pet_id = serializers.SerializerMethodField()
+    class Meta:
+        model = User
+        exclude = ["groups", "user_permissions", "is_superuser", "is_staff", 'plain_password']
+    def get_linked_pet_id(self, obj):
+        return Pet.objects.filter(owner=obj).order_by('-updated_at').first().id if Pet.objects.filter(owner=obj).exists() else None
+
 
 class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:

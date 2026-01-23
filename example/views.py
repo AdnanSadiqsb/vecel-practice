@@ -422,7 +422,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         user = get_and_authenticate_user(email=request.data['email'], password=request.data['password'])
         user.last_login = timezone.now()
         user.save()
-        data = serializer.UserSerializer(user).data  
+        data = serializer.LoginResponseUserSerializer(user).data  
         token, created = Token.objects.get_or_create(user=user)
         return Response(data={'user': data, 'token': token.key}, status=status.HTTP_200_OK)
     
